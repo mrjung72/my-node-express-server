@@ -24,13 +24,13 @@ app.get('/api/users', async (req, res) => {
 });
 
 // Add a user
-app.post('/api/users', async (req, res) => {
-  const { name, email } = req.body;
+app.post('/api/register', async (req, res) => {
+  const { username, password, email } = req.body;
   try {
     const conn = await pool.getConnection();
-    const result = await conn.query('INSERT INTO users(name, email) VALUES(?, ?)', [name, email]);
+    const result = await conn.query('INSERT INTO users(username, password, email) VALUES(?, ?, ?)', [username, password, email]);
     conn.release();
-    res.json({ id: result.insertId, name, email });
+    res.json({ id: result.insertId, username, password, email });
   } catch (err) {
     console.error(err);
     res.status(500).send('Failed to insert user');
