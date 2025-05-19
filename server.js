@@ -8,7 +8,7 @@ const mssql = require('mssql');
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const cors = require('cors');
-const pool = require('./db');
+const mypool = require('./db');
 require('dotenv').config();
 
 const app = express();
@@ -24,7 +24,7 @@ app.post('/api/login', async (req, res) => {
     const { username, password } = req.body
 
     try {
-        const conn = await pool.getConnection()
+        const conn = await mypool.getConnection()
         const rows = await conn.query('SELECT * FROM users WHERE username = ?', [username])
         conn.release()
         const user = rows[0][0]
@@ -63,7 +63,7 @@ app.post('/api/register', async (req, res) => {
 
     const hashedpassword = await bcrypt.hash(password, 10)
 
-    const conn = await pool.getConnection();
+    const conn = await mypool.getConnection();
     const result = await conn.query('INSERT INTO users(username, password, email) VALUES(?, ?, ?)', [username, hashedpassword, email]);
     conn.release();
     res.json({ id: result.insertId, username, password, email });
@@ -88,7 +88,7 @@ app.post('/api/upload-csv', upload.single('file'), async (req, res) => {
         .on('data', (data) => results.push(data))
         .on('end', async () => {
             try {
-                const conn = await pool.getConnection()
+                const conn = await mypool.getConnection()
 
                 for (const row of results) {
                     // 유효성 검사 및 중복 체크 예시
@@ -141,7 +141,7 @@ const commonDBConfig = {
 // Get all users
 app.get('/api/users', async (req, res) => {
   try {
-    const conn = await pool.getConnection();
+    const conn = await mypool.getConnection();
     const rows = await conn.query('SELECT * FROM users');
     conn.release();
     res.json(rows);
@@ -154,27 +154,67 @@ app.get('/api/users', async (req, res) => {
 
 app.get('/api/remotedb-status', async (req, res) => {
 
-  console.log('remotedb-status API called');
+    console.log('remotedb-status API called');
     const ipList = fs.readFileSync('resources/remotedb_server_ips.txt', 'utf-8').split('\n').map(ip => ip.trim()).filter(Boolean);
     console.log('IP List:', ipList);
     const results = [];
 
-    for (const ip of ipList) {
-        try {
-            const pool = await mssql.connect({ ...commonDBConfig, server: ip });
-            const result = await pool.request().query('SELECT @@VERSION as version')
-            console.log('SQL Server Version:', result.recordset[0].version)
-            results.push({ ip, status: '성공' , version: result.recordset[0].version });
-            await pool.close();
-            
-          } catch (err) {
-          console.error(`[❌] DB 연결 실패: ${ip} - ${err.message}`);
-            results.push({ ip, status: '실패', error: err.message });
-        }
-    }
+    await Promise.allSettled(
 
+      ipList.map(async (ip) => {
+        try {
+          const conn = await mssql.connect({ ...commonDBConfig, server: ip });
+          const result = await conn.request().query('SELECT @@VERSION AS version');
+          await conn.close();
+          results.push({ ip, status: 'connected', version: result.recordset[0].version });
+          console.log(`Connected to ${ip}:`, result.recordset[0].version);
+
+        } catch (error) {
+          console.error(`[❌] DB 연결 실패 : ${ip}:`, error.message);
+          results.push({ ip, status: 'error', message: error.message });
+        }
+      })
+    );
+    
     res.json(results);
-});
+  });
+
+  // server.js
+app.get('/api/server-list', async (req, res) => {
+
+
+    const conn = await mypool.getConnection();
+    const rows = await conn.query('SELECT * FROM servers');
+    const servers = rows.recordset;
+    conn.release();
+
+    // 응답은 서버 목록만 먼저 전달
+    res.json(rows[0])
+
+    // 서버 상태 확인은 클라이언트가 개별적으로 요청
+})
+
+// 개별 서버 상태 확인용 엔드포인트
+app.get('/api/server-status/:id', async (req, res) => {
+    const { id } = req.params
+    const myconn = await mypool.getConnection();
+    const rows = await mypool.execute('SELECT ip FROM servers WHERE id = ?', [id]);
+    myconn.release();
+
+    const server = rows[0][0];
+    if (!server) return res.status(404).json({ error: 'Server not found' })
+
+    // MSSQL 접속 확인
+    try {
+          const conn = await mssql.connect({ ...commonDBConfig, server: server.ip });
+          const version = await conn.request().query('SELECT @@VERSION AS version')
+          await conn.close();
+
+        res.json({ status: 'connected', version: version.recordset[0].version })
+    } catch (err) {
+        res.json({ status: 'error', error: err.message })
+    }
+})
 
 
 app.listen(port, () => {
