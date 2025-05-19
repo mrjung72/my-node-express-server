@@ -4,6 +4,7 @@ const multer = require('multer');
 const csv = require('csv-parser');
 const fs = require('fs');
 const mysql = require('mysql2');
+const mssql = require('mssql');
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const cors = require('cors');
@@ -16,19 +17,6 @@ const port = process.env.PORT || 4000;
 app.use(cors());
 app.use(express.json());
 
-
-// Get all users
-app.get('/api/users', async (req, res) => {
-  try {
-    const conn = await pool.getConnection();
-    const rows = await conn.query('SELECT * FROM users');
-    conn.release();
-    res.json(rows);
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Database query failed');
-  }
-});
 
 
 // 로그인 API
@@ -135,6 +123,58 @@ app.post('/api/upload-csv', upload.single('file'), async (req, res) => {
         })
 })
 
+
+
+const commonDBConfig = {
+  user: 'sahara',
+  password: '1111',
+  database: 'master',
+  port: 1433, // 기본 MSSQL 포트
+  options: {
+    encrypt: false,
+    trustServerCertificate: true,
+  }
+};
+
+
+
+// Get all users
+app.get('/api/users', async (req, res) => {
+  try {
+    const conn = await pool.getConnection();
+    const rows = await conn.query('SELECT * FROM users');
+    conn.release();
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Database query failed');
+  }
+});
+
+
+app.get('/api/remotedb-status', async (req, res) => {
+
+  console.log('remotedb-status API called');
+    const ipList = fs.readFileSync('resources/remotedb_server_ips.txt', 'utf-8').split('\n').map(ip => ip.trim()).filter(Boolean);
+    console.log('IP List:', ipList);
+    const results = [];
+
+    for (const ip of ipList) {
+        try {
+            const pool = await mssql.connect({ ...commonDBConfig, server: ip });
+            const result = await pool.request().query('SELECT @@VERSION as version')
+            console.log('SQL Server Version:', result.recordset[0].version)
+            results.push({ ip, status: '성공' , version: result.recordset[0].version });
+            await pool.close();
+            
+          } catch (err) {
+          console.error(`[❌] DB 연결 실패: ${ip} - ${err.message}`);
+            results.push({ ip, status: '실패', error: err.message });
+        }
+    }
+
+    res.json(results);
+});
 
 
 app.listen(port, () => {
