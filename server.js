@@ -18,6 +18,35 @@ app.use(cors());
 app.use(express.json());
 
 
+// multer 설정
+const upload = multer({ dest: 'uploads/' });
+const { uploadCsvFile } = require('./utils/csvUploader')
+
+app.post('/api/upload-users', upload.single('file'), async (req, res) => {
+    const filePath = req.file.path
+    const columns = ['name', 'email', 'password'] // users 테이블 컬럼
+    try {
+        const result = await uploadCsvFile(filePath, 'users', columns, mypool)
+        res.json(result)
+    } catch (err) {
+        console.error(err)
+        res.status(500).json({ success: false, error: err.sqlMessage })
+    }
+})
+
+
+app.post('/api/upload-servers', upload.single('file'), async (req, res) => {
+    const filePath = req.file.path
+    const columns = ['ip', 'port', 'name', 'corp_id', 'category', 'env_type'] // server 테이블 컬럼
+    try {
+        const result = await uploadCsvFile(filePath, 'servers', columns, mypool)
+        res.json(result)
+    } catch (err) {
+        console.error(err)
+        res.status(500).json({ success: false, error: err.sqlMessage })
+    }
+})
+
 
 // 로그인 API
 app.post('/api/login', async (req, res) => {
@@ -74,8 +103,6 @@ app.post('/api/register', async (req, res) => {
 });
 
 
-// multer 설정
-const upload = multer({ dest: 'uploads/' });
 
 app.post('/api/upload-csv', upload.single('file'), async (req, res) => {
     const filePath = req.file.path
