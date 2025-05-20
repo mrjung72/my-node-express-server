@@ -24,7 +24,7 @@ const { uploadCsvFile } = require('./utils/csvUploader')
 
 app.post('/api/upload-users', upload.single('file'), async (req, res) => {
     const filePath = req.file.path
-    const columns = ['name', 'email', 'password'] // users 테이블 컬럼
+    const columns = ['username', 'password', 'email'] // users 테이블 컬럼
     try {
         const result = await uploadCsvFile(filePath, 'users', columns, mypool)
         res.json(result)
