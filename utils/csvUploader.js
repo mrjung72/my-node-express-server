@@ -1,5 +1,6 @@
 // utils/csvUploader.js
 const fs = require('fs')
+const iconv = require('iconv-lite')
 const csv = require('csv-parser')
 
 async function uploadCsvFile(filePath, tableName, columns, db) {
@@ -7,6 +8,7 @@ async function uploadCsvFile(filePath, tableName, columns, db) {
         const rows = []
 
         fs.createReadStream(filePath)
+            .pipe(iconv.decodeStream('euc-kr')) // <-- 인코딩 변환
             .pipe(csv())
             .on('data', (data) => {
                 // 필요한 컬럼만 추출해서 정렬된 배열로 구성
