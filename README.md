@@ -28,7 +28,7 @@ CREATE TABLE servers (
   name varchar(100) DEFAULT NULL,
   corp_id varchar(100) DEFAULT NULL,
   category varchar(100) DEFAULT NULL,   
-  serer_type varchar(100) DEFAULT NULL,   -- 구분 (DB/APP)
+  server_type varchar(100) DEFAULT NULL,   -- 구분 (DB/APP)
   env_type varchar(100) DEFAULT NULL,   -- 환경 (prod/qas/dev)
   role_type varchar(100) DEFAULT NULL,   -- 역할 (vip/active/standby/async)
   createdAt timestamp NULL DEFAULT current_timestamp(),
