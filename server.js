@@ -37,9 +37,9 @@ app.post('/api/upload-users', upload.single('file'), async (req, res) => {
 
 app.post('/api/upload-servers', upload.single('file'), async (req, res) => {
     const filePath = req.file.path
-    const columns = ['ip', 'port', 'name', 'corp_id', 'category', 'env_type'] // server 테이블 컬럼
+    const columns = ['ip', 'port', 'name', 'corp_id', 'category', 'server_type', 'env_type', 'role_type'] // server 테이블 컬럼
     try {
-        const result = await uploadCsvFile(filePath, 'servers', columns, mypool)
+        const result = await uploadCsvFile(filePath, 'servers', columns, mypool) 
         res.json(result)
     } catch (err) {
         console.error(err)
