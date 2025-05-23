@@ -3,11 +3,11 @@ const router = express.Router()
 
 // 로그인 API
 router.post('/', async (req, res) => {
-    const { username, password } = req.body
+    const { email, password } = req.body
 
     try {
         const conn = await mypool.getConnection()
-        const rows = await conn.query('SELECT * FROM users WHERE username = ?', [username])
+        const rows = await conn.query('SELECT * FROM members WHERE email = ?', [email])
         conn.release()
         const user = rows[0][0]
 
@@ -27,8 +27,8 @@ router.post('/', async (req, res) => {
             token,
             user: {
                 id: user.id,
-                username: user.username,
-                email: user.email
+                email: user.email,
+                name: user.name
             }
         })
     } catch (err) {
