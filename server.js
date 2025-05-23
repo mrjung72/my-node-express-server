@@ -103,7 +103,6 @@ app.post('/api/register', async (req, res) => {
 });
 
 
-
 app.post('/api/upload-csv', upload.single('file'), async (req, res) => {
     const filePath = req.file.path
 
@@ -164,19 +163,72 @@ const commonDBConfig = {
 };
 
 
-
 // Get all users
-app.get('/api/users', async (req, res) => {
+app.get('/api/members', async (req, res) => {
+
   try {
     const conn = await mypool.getConnection();
-    const rows = await conn.query('SELECT * FROM users');
+    const rows = await conn.query('SELECT * FROM members');
+    console.log('rows:', rows);
     conn.release();
-    res.json(rows);
+    res.json(rows[0]);
   } catch (err) {
     console.error(err);
     res.status(500).send('Database query failed');
   }
 });
+
+
+// 회원 등록
+app.post('/api/members', async (req, res) => {
+
+  const { name, email, joined, isAdmin } = req.body;
+  try {
+    const conn = await mypool.getConnection();
+    const sql = 'INSERT INTO members (name, email, joined, isAdmin) VALUES (?, ?, ?, ?)';
+    const [result] = await conn.query(sql, [name, email, joined || new Date(), isAdmin ? 1 : 0]);
+    conn.release();
+    res.status(201).json({ id: result.insertId, name, email, joined, isAdmin });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Insert failed');
+  }
+});
+
+
+// 회원 수정
+app.put('/api/members/:id', async (req, res) => {
+
+  const { name, email, isAdmin } = req.body;
+  const { id } = req.params;
+  try {
+    const conn = await mypool.getConnection();
+    const sql = 'UPDATE members SET name = ?, email = ?, isAdmin = ? WHERE id = ?';
+    await conn.query(sql, [name, email, isAdmin ? 1 : 0, id]);
+    conn.release();
+    res.json({ id, name, email, isAdmin });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Update failed');
+  }
+});
+
+
+// 회원 삭제
+app.delete('/api/members/:id', async (req, res) => {
+
+  const { id } = req.params;
+  try {
+    const conn = await mypool.getConnection();
+    await conn.query('DELETE FROM members WHERE id = ?', [id]);
+    conn.release();
+    res.status(204).end();
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Delete failed');
+  }
+});
+
 
 
 app.get('/api/remotedb-status', async (req, res) => {
