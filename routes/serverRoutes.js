@@ -1,0 +1,69 @@
+const express = require('express')
+const router = express.Router()
+const fs = require('fs')
+const mssql = require('mssql')
+const mypool = require('../db')
+
+const remoteDBConfig = {
+  user: 'sahara',
+  password: '1111',
+  database: 'master',
+  port: 1433,
+  options: {
+    encrypt: false,
+    trustServerCertificate: true,
+  }
+}
+
+// 서버 목록 조회
+router.get('/', async (req, res) => {
+  const conn = await mypool.getConnection()
+  const rows = await conn.query('SELECT * FROM servers')
+  conn.release()
+  res.json(rows[0])
+})
+
+// 개별 서버 상태 확인
+router.get('/status/:id', async (req, res) => {
+  const { id } = req.params
+  const myconn = await mypool.getConnection()
+  const rows = await myconn.execute('SELECT ip FROM servers WHERE id = ?', [id])
+  myconn.release()
+
+  const server = rows[0][0]
+  if (!server) return res.status(404).json({ error: 'Server not found' })
+
+  try {
+    const conn = await mssql.connect({ ...remoteDBConfig, server: server.ip })
+    const version = await conn.request().query('SELECT @@VERSION AS version')
+    await conn.close()
+    res.json({ status: 'connected', version: version.recordset[0].version })
+  } catch (err) {
+    res.json({ status: 'error', error: err.message })
+  }
+})
+
+// 여러 서버 상태 확인
+router.get('/status', async (req, res) => {
+  const ipList = fs.readFileSync('resources/remotedb_server_ips.txt', 'utf-8')
+    .split('\n')
+    .map(ip => ip.trim())
+    .filter(Boolean)
+
+  const results = []
+
+  await Promise.allSettled(ipList.map(async (ip) => {
+    try {
+      const conn = await mssql.connect({ ...remoteDBConfig, server: ip })
+      const result = await conn.request().query('SELECT @@VERSION AS version')
+      await conn.close()
+      results.push({ ip, status: 'connected', version: result.recordset[0].version })
+    } catch (error) {
+      results.push({ ip, status: 'error', message: error.message })
+    }
+  }))
+
+  res.json(results)
+})
+
+module.exports = router
