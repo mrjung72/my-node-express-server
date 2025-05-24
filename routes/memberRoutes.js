@@ -1,6 +1,8 @@
 const express = require('express')
 const router = express.Router()
 const mypool = require('../db')
+const bcrypt = require('bcrypt')
+const jwt = require('jsonwebtoken')
 
 // 회원 목록 조회
 router.get('/', async (req, res) => {
@@ -20,8 +22,9 @@ router.post('/', async (req, res) => {
   const { name, email, password, isAdmin } = req.body
   try {
     const conn = await mypool.getConnection()
+    const hashedpassword = await bcrypt.hash(password, 10)
     const sql = 'INSERT INTO members (name, email, password, isAdmin) VALUES (?, ?, ?, ?)'
-    const [result] = await conn.query(sql, [name, email, password || new Date(), isAdmin ? 1 : 0])
+    const [result] = await conn.query(sql, [name, email, hashedpassword, isAdmin ? 1 : 0])
     conn.release()
     res.status(201).json({ id: result.insertId, name, email, password, isAdmin })
   } catch (err) {
