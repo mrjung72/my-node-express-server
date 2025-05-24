@@ -63,7 +63,7 @@ router.post('/', async (req, res) => {
                 id: user.id,
                 email: user.email,
                 name: user.name,
-                isadmin: user.isAdmin,
+                isAdmin: user.isAdmin,
             }
         })
     } catch (err) {

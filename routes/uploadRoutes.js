@@ -12,7 +12,7 @@ const { uploadCsvFile } = require('../utils/csvUploader');
 
 router.post('/members', upload.single('file'), async (req, res) => {
     const filePath = req.file.path
-    const columns = ['name', 'email', 'password', "isadmin"] // users 테이블 컬럼
+    const columns = ['name', 'email', 'password', "isAdmin"] // users 테이블 컬럼
     try {
         const result = await uploadCsvFile(filePath, 'members', columns, mypool)
 
