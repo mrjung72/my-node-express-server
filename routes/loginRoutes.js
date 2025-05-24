@@ -9,7 +9,8 @@ const admin = {
     id: 9999,
     email: 'admin@site.com',
     password: '$2b$10$jYfAmjcPsI4AWmrY2a0znOj0jRfCYcIZvXPtCmXhqOurpMmToWD6W',
-    name: '관리자'
+    name: '관리자',
+    isAdmin : 1,
 }
 
 
@@ -19,18 +20,28 @@ router.post('/', async (req, res) => {
 
     try {
 
-        const user = {}
+        let user = null
         if(email === admin.email) {
-            user.id = admin.id
-            user.email = admin.email
-            user.password = admin.password  
-            user.name = admin.name  
+            user = admin
         }       
         else {
-            const conn = await mypool.getConnection()
-            const rows = await conn.query('SELECT * FROM members WHERE email = ?', [email])
-            user = rows[0][0]
-            conn.release()
+            // 4. 일반 사용자 데이터베이스 조회
+            const conn = await mypool.getConnection();
+            try {
+                // mysql2는 보통 [rows, fields]를 반환. rows[0]가 실제 사용자 객체 배열.
+                const [rows] = await conn.query('SELECT * FROM members WHERE email = ?', [email]);
+                
+                // 조회 결과가 있다면 첫 번째 행을 user로 설정
+                if (rows && rows.length > 0) {
+                    user = rows[0];
+                }
+                // else: user는 여전히 null (DB에서 찾지 못함)
+
+            } finally {
+                // 쿼리 완료 후 반드시 커넥션 해제
+                conn.release();
+            }
+            
         }
         
 
@@ -51,7 +62,8 @@ router.post('/', async (req, res) => {
             user: {
                 id: user.id,
                 email: user.email,
-                name: user.name
+                name: user.name,
+                isadmin: user.isAdmin,
             }
         })
     } catch (err) {
