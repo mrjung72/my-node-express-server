@@ -12,9 +12,14 @@ const { uploadCsvFile } = require('../utils/csvUploader');
 
 router.post('/members', upload.single('file'), async (req, res) => {
     const filePath = req.file.path
-    const columns = ['name', 'password', 'email', "isadmin"] // users 테이블 컬럼
+    const columns = ['name', 'email', 'password', "isadmin"] // users 테이블 컬럼
     try {
         const result = await uploadCsvFile(filePath, 'members', columns, mypool)
+
+        if(result.success) {
+            // 패스워드 암호화 로직 추가 할 것.....
+        }
+
         res.json(result)
     } catch (err) {
         console.error(err)

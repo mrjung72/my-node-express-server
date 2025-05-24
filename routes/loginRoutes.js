@@ -5,15 +5,34 @@ const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 
 
+const admin = {
+    id: 9999,
+    email: 'admin@site.com',
+    password: '$2b$10$jYfAmjcPsI4AWmrY2a0znOj0jRfCYcIZvXPtCmXhqOurpMmToWD6W',
+    name: '관리자'
+}
+
+
 // 로그인 API
 router.post('/', async (req, res) => {
     const { email, password } = req.body
 
     try {
-        const conn = await mypool.getConnection()
-        const rows = await conn.query('SELECT * FROM members WHERE email = ?', [email])
-        conn.release()
-        const user = rows[0][0]
+
+        const user = {}
+        if(email === admin.email) {
+            user.id = admin.id
+            user.email = admin.email
+            user.password = admin.password  
+            user.name = admin.name  
+        }       
+        else {
+            const conn = await mypool.getConnection()
+            const rows = await conn.query('SELECT * FROM members WHERE email = ?', [email])
+            user = rows[0][0]
+            conn.release()
+        }
+        
 
         if (!user) {
           return res.status(401).json({ message: `미등록 사용자 입니다.` })

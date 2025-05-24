@@ -13,7 +13,11 @@ async function uploadCsvFile(filePath, tableName, columns, db) {
             .on('data', (data) => {
                 // 필요한 컬럼만 추출해서 정렬된 배열로 구성
                 const row = columns.map(col => data[col])
-                rows.push(row)
+
+                if (row.length > 0 && row[0] != undefined) {
+                    rows.push(row)
+                    console.log('Row:', row)
+                }
             })
             .on('end', async () => {
                 if (rows.length === 0) return resolve({ success: false, message: 'No data' })
