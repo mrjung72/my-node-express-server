@@ -17,13 +17,13 @@ router.get('/', async (req, res) => {
 
 // 회원 등록
 router.post('/', async (req, res) => {
-  const { name, email, joined, isAdmin } = req.body
+  const { name, email, password, isAdmin } = req.body
   try {
     const conn = await mypool.getConnection()
-    const sql = 'INSERT INTO members (name, email, joined, isAdmin) VALUES (?, ?, ?, ?)'
-    const [result] = await conn.query(sql, [name, email, joined || new Date(), isAdmin ? 1 : 0])
+    const sql = 'INSERT INTO members (name, email, password, isAdmin) VALUES (?, ?, ?, ?)'
+    const [result] = await conn.query(sql, [name, email, password || new Date(), isAdmin ? 1 : 0])
     conn.release()
-    res.status(201).json({ id: result.insertId, name, email, joined, isAdmin })
+    res.status(201).json({ id: result.insertId, name, email, password, isAdmin })
   } catch (err) {
     console.error(err)
     res.status(500).send('Insert failed')
@@ -36,7 +36,7 @@ router.put('/:id', async (req, res) => {
   const { id } = req.params
   try {
     const conn = await mypool.getConnection()
-    const sql = 'UPDATE members SET name = ?, email = ?, isAdmin = ? WHERE id = ?'
+    const sql = 'UPDATE members SET name = ?, email = ?, isAdmin = ?, updatedAt = current_timestamp() WHERE id = ?'
     await conn.query(sql, [name, email, isAdmin ? 1 : 0, id])
     conn.release()
     res.json({ id, name, email, isAdmin })
