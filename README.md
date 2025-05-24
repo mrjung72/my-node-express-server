@@ -4,13 +4,15 @@
 # mysql members 테이블 스키마 생성
 CREATE TABLE members (
   id int(11) NOT NULL AUTO_INCREMENT,
-  name varchar(100) DEFAULT NULL,
+  userid varchar(100) NOT NULL,
+  name varchar(100) NOT NULL,
   email varchar(255) NOT NULL,
   password varchar(255) NOT NULL,
   isAdmin tinyint(1) DEFAULT 0,
   createdAt timestamp NULL DEFAULT current_timestamp(),
   updatedAt timestamp NULL DEFAULT NULL,
   PRIMARY KEY (id),
+  UNIQUE KEY userid (userid),
   UNIQUE KEY email (email)
 );
 
