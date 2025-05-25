@@ -26,7 +26,7 @@ router.post('/', async (req, res) => {
     const sql = 'INSERT INTO members (name, email, userid, password, isAdmin) VALUES (?, ?, ?, ?, ?)'
     const [result] = await conn.query(sql, [name, email, userid, hashedpassword, isAdmin ? 1 : 0])
     conn.release()
-    res.status(201).json({ id: result.insertId, name, email, userid, password, isAdmin })
+    res.status(201).json({ userid: result.insertId, name, email, userid, password, isAdmin })
   } catch (err) {
     console.error(err)
     res.status(500).send('Insert failed')
@@ -34,15 +34,15 @@ router.post('/', async (req, res) => {
 })
 
 // 회원 수정
-router.put('/:id', async (req, res) => {
-  const { name, email, userid, isAdmin } = req.body
-  const { id } = req.params
+router.put('/:userid', async (req, res) => {
+  const { name, isAdmin } = req.body
+  const { userid } = req.params
   try {
     const conn = await mypool.getConnection()
-    const sql = 'UPDATE members SET name = ?, isAdmin = ?, updatedAt = current_timestamp() WHERE id = ?'
-    await conn.query(sql, [name, isAdmin ? 1 : 0, id])
+    const sql = 'UPDATE members SET name = ?, isAdmin = ?, updatedAt = current_timestamp() WHERE userid = ?'
+    await conn.query(sql, [name, isAdmin ? 1 : 0, userid])
     conn.release()
-    res.json({ id, name, email, userid, isAdmin })
+    res.json({ userid, name, isAdmin })
   } catch (err) {
     console.error(err)
     res.status(500).send('Update failed')
@@ -50,11 +50,11 @@ router.put('/:id', async (req, res) => {
 })
 
 // 회원 삭제
-router.delete('/:id', async (req, res) => {
-  const { id } = req.params
+router.delete('/:userid', async (req, res) => {
+  const { userid } = req.params
   try {
     const conn = await mypool.getConnection()
-    await conn.query('DELETE FROM members WHERE id = ?', [id])
+    await conn.query('DELETE FROM members WHERE userid = ?', [userid])
     conn.release()
     res.status(204).end()
   } catch (err) {

@@ -13,7 +13,7 @@ CREATE TABLE members (
   isAdmin tinyint(1) DEFAULT 0,
   reg_pc_ip varchar(20) NULL,   -- 등록자 PC 아이피
   createdAt timestamp NULL DEFAULT current_timestamp(),
-  closedAt timestamp NULL DEFAULT NULL,
+  updatedAt timestamp NULL DEFAULT NULL,
   PRIMARY KEY (userid),
   UNIQUE KEY uk_members_01 (email),
   INDEX ix_members_01 (name)
