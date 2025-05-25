@@ -29,7 +29,8 @@ CREATE TABLE login_his (
   createdAt timestamp NULL DEFAULT current_timestamp(),
   PRIMARY KEY (id),
   INDEX ix_login_his_01 (userid),
-  INDEX ix_login_his_02 (user_pc_ip)
+  INDEX ix_login_his_02 (user_pc_ip),
+  FOREIGN KEY (userid) REFERENCES members(userid)
 );
 
 
@@ -77,6 +78,7 @@ CREATE TABLE servers_port (
 # 데이터베이스 정의 테이블 스키마 생성
 drop table database_instances;
 CREATE TABLE database_instances (
+  id int(11) NOT NULL AUTO_INCREMENT,
   server_ip varchar(20) NOT NULL,
   server_port int(4) NOT NULL,
   db_instance_name varchar(100) NOT NULL,
@@ -88,7 +90,8 @@ CREATE TABLE database_instances (
   createdAt timestamp DEFAULT current_timestamp(),
   closedAt timestamp NULL DEFAULT current_timestamp(),
   lastCheckedAt timestamp NULL DEFAULT current_timestamp(),
-  PRIMARY KEY (server_ip, server_port, db_instance_name),
+  PRIMARY KEY (id),
+  UNIQUE ux_database_instances_01 (server_ip, server_port, db_instance_name),
   INDEX ix_database_instances_01 (db_instance_name),
   FOREIGN KEY (server_ip, server_port) REFERENCES servers_port(server_ip, server_port)
 );
