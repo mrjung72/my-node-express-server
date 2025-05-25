@@ -8,7 +8,7 @@ const jwt = require('jsonwebtoken')
 router.get('/', async (req, res) => {
   try {
     const conn = await mypool.getConnection()
-    const rows = await conn.query('SELECT * FROM members')
+    const rows = await conn.query('SELECT userid, name, email, isadmin, createdAt FROM members')
     conn.release()
     res.json(rows[0])
   } catch (err) {
