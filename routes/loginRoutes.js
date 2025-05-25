@@ -6,7 +6,7 @@ const jwt = require('jsonwebtoken')
 
 
 const admin = {
-    id: 9999,
+    userid: 'admin',
     email: 'admin@site.com',
     password: '$2b$10$jYfAmjcPsI4AWmrY2a0znOj0jRfCYcIZvXPtCmXhqOurpMmToWD6W',
     name: '관리자',
@@ -16,12 +16,12 @@ const admin = {
 
 // 로그인 API
 router.post('/', async (req, res) => {
-    const { email, password } = req.body
+    const { userid, password } = req.body
 
     try {
 
         let user = null
-        if(email === admin.email) {
+        if(userid === admin.userid) {
             user = admin
         }       
         else {
@@ -29,7 +29,7 @@ router.post('/', async (req, res) => {
             const conn = await mypool.getConnection();
             try {
                 // mysql2는 보통 [rows, fields]를 반환. rows[0]가 실제 사용자 객체 배열.
-                const [rows] = await conn.query('SELECT * FROM members WHERE email = ?', [email]);
+                const [rows] = await conn.query('SELECT * FROM members WHERE userid = ?', [userid]);
                 
                 // 조회 결과가 있다면 첫 번째 행을 user로 설정
                 if (rows && rows.length > 0) {
@@ -54,13 +54,13 @@ router.post('/', async (req, res) => {
             return res.status(401).json({ message: '비밀번호가 일치하지 않습니다.' })
         }
 
-        const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '1h' })
+        const token = jwt.sign({ userid: user.userid, email: user.email }, process.env.JWT_SECRET, { expiresIn: '1h' })
 
         res.json({
             message: '로그인 성공',
             token,
             user: {
-                id: user.id,
+                userid: user.userid,
                 email: user.email,
                 name: user.name,
                 isAdmin: user.isAdmin,
