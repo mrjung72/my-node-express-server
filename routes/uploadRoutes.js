@@ -49,7 +49,7 @@ router.post('/members', upload.single('file'), async (req, res) => {
                 res.json({ message: `총 ${insertedRows.length}건의 데이터가 업로드되었습니다.!!!`})
             } catch (err) {
                 console.error(err)
-                res.status(500).json({ message: '서버 오류' })
+                res.status(500).json({ message: '[ERROR] ' + err.message})
             }
         })
 })
