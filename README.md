@@ -29,8 +29,7 @@ CREATE TABLE login_his (
   createdAt timestamp NULL DEFAULT current_timestamp(),
   PRIMARY KEY (id),
   INDEX ix_login_his_01 (userid),
-  INDEX ix_login_his_02 (user_pc_ip),
-  FOREIGN KEY (userid) REFERENCES members(userid)
+  INDEX ix_login_his_02 (user_pc_ip)
 );
 
 
@@ -53,7 +52,7 @@ CREATE TABLE servers (
   closedAt timestamp NULL DEFAULT current_timestamp(),
   lastCheckedAt timestamp NULL DEFAULT current_timestamp(),
   PRIMARY KEY (server_ip),
-  UNIQUE KEY uk_servers_01 (corp_id, proc_type, server_type, env_type, role_type),
+  UNIQUE KEY uk_servers_01 (corp_id, proc_type, server_type, usage_type, env_type, role_type),
   INDEX ix_servers_01 (server_type, env_type, role_type)
 );
 
@@ -73,8 +72,7 @@ CREATE TABLE database_instances (
   closedAt timestamp NULL DEFAULT current_timestamp(),
   lastCheckedAt timestamp NULL DEFAULT current_timestamp(),
   PRIMARY KEY (server_ip, instance_name),
-  INDEX ix_database_instances_01 (instance_name),
-  FOREIGN KEY (server_ip) REFERENCES servers(server_ip)
+  INDEX ix_database_instances_01 (instance_name)
 );
 
 
@@ -100,7 +98,6 @@ CREATE TABLE servers_connect_his (
   INDEX ix_servers_connect_his_02 (user_email),
   INDEX ix_servers_connect_his_03 (server_ip),
   INDEX ix_servers_connect_his_04 (db_name),
-  INDEX ix_servers_connect_his_05 (db_userid),
-  FOREIGN KEY (server_ip) REFERENCES servers(server_ip)
+  INDEX ix_servers_connect_his_05 (db_userid)
 );
 
