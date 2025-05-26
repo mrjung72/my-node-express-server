@@ -9,14 +9,19 @@ async function uploadCsvFile(filePath, tableName, columns, db) {
 
         fs.createReadStream(filePath)
             .pipe(iconv.decodeStream('euc-kr')) // <-- 인코딩 변환
-            .pipe(csv())
+            .pipe(csv({
+                mapHeaders: ({ header }) => header.trim() // 헤더 공백 제거
+            }))
             .on('data', (data) => {
-                // 필요한 컬럼만 추출해서 정렬된 배열로 구성
-                const row = columns.map(col => data[col])
 
-                if (row.length > 0 && row[0] != undefined) {
+                // 필요한 컬럼만 추출해서 정렬된 배열로 구성
+                const row = columns.map(col => {
+                    const value = data[col.trim()] // trim()을 사용하여 공백 제거
+                    return typeof value === 'string' ? value.trim() : value
+                })
+  
+                if (row.length > 0 && row[0] != null && row[0] != '') {
                     rows.push(row)
-                    console.log('Row:', row)
                 }
             })
             .on('end', async () => {

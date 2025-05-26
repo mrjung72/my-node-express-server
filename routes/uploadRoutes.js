@@ -21,7 +21,9 @@ router.post('/members', upload.single('file'), async (req, res) => {
 
     fs.createReadStream(filePath)
         .pipe(iconv.decodeStream('euc-kr')) // <-- 인코딩 변환
-        .pipe(csv())
+        .pipe(csv({
+            mapHeaders: ({ header }) => header.trim() // 헤더 공백 제거
+        }))
         .on('data', (data) => results.push(data))
         .on('end', async () => {
             try {
@@ -57,7 +59,7 @@ router.post('/members', upload.single('file'), async (req, res) => {
 
 router.post('/servers', upload.single('file'), async (req, res) => {
     const filePath = req.file.path
-    const columns = ['ip', 'port', 'name', 'corp_id', 'category', 'server_type', 'env_type', 'role_type'] // server 테이블 컬럼
+    const columns = ['server_ip', 'hostname', 'title', 'corp_id', 'proc_type', 'server_type', 'os_version', 'usage_type', 'env_type', 'role_type'] // server 테이블 컬럼
     try {
         const result = await uploadCsvFile(filePath, 'servers', columns, mypool) 
         res.json(result)
