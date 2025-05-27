@@ -41,8 +41,6 @@ CREATE TABLE servers (
   title varchar(100) NOT NULL,
   corp_id varchar(100) DEFAULT NULL,  -- 법인ID
   proc_type varchar(100) DEFAULT NULL,   -- 공정구분
-  server_type varchar(100) DEFAULT NULL,   -- 서버타입 (WINDOW/LINUX/UNIX/...)
-  os_version varchar(100) DEFAULT NULL,   -- 운영체제 버전정보
   usage_type varchar(100) NOT NULL,   -- 용도분류 (DB/WEB/WAS/APP/...)
   env_type varchar(100) NOT NULL,   -- 환경구분 (prod/qas/dev)
   role_type varchar(100) DEFAULT NULL,   -- 역할구분 (vip/active/standby/async)
@@ -52,26 +50,25 @@ CREATE TABLE servers (
   closedAt timestamp NULL DEFAULT current_timestamp(),
   lastCheckedAt timestamp NULL DEFAULT current_timestamp(),
   PRIMARY KEY (server_ip),
-  UNIQUE KEY uk_servers_01 (corp_id, proc_type, server_type, usage_type, env_type, role_type),
-  INDEX ix_servers_01 (server_type, env_type, role_type)
+  UNIQUE KEY uk_servers_01 (corp_id, proc_type, usage_type, env_type, role_type),
+  INDEX ix_servers_01 (env_type, role_type)
 );
 
 
-# 데이터베이스 정의 테이블 스키마 생성
-drop table database_instances;
-CREATE TABLE database_instances (
+# servers_port 정의 테이블 스키마 생성
+drop table servers_port;
+CREATE TABLE servers_port (
   server_ip varchar(20) NOT NULL,
-  instance_name varchar(100) NOT NULL,
   port int(4) NOT NULL,
   title varchar(100) NOT NULL,
-  db_brand varchar(100) DEFAULT NULL,   -- DB 브랜드 (oracle, mssql, mysql, mariadb, postgresql, ...)
-  db_version varchar(100) DEFAULT NULL,   -- DB 버전정보
+  usage_type varchar(100) NOT NULL,   -- 용도분류 (DB/WEB/WAS/APP/...)
+  instance_name varchar(100) NOT NULL,
   status_cd varchar(1) DEFAULT 'Y',       -- 상태코드(Y-사용,N-미사용)
   descryption varchar(2000) DEFAULT NULL,   -- 설명
   createdAt timestamp DEFAULT current_timestamp(),
   closedAt timestamp NULL DEFAULT current_timestamp(),
   lastCheckedAt timestamp NULL DEFAULT current_timestamp(),
-  PRIMARY KEY (server_ip, instance_name),
+  PRIMARY KEY (server_ip, port),
   INDEX ix_database_instances_01 (instance_name)
 );
 
