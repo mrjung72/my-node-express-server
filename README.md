@@ -62,14 +62,28 @@ CREATE TABLE servers_port (
   port int(4) NOT NULL,
   title varchar(100) NOT NULL,
   usage_type varchar(100) NOT NULL,   -- 용도분류 (DB/WEB/WAS/APP/...)
-  instance_name varchar(100) NOT NULL,
   status_cd varchar(1) DEFAULT 'Y',       -- 상태코드(Y-사용,N-미사용)
   descryption varchar(2000) DEFAULT NULL,   -- 설명
   createdAt timestamp DEFAULT current_timestamp(),
   closedAt timestamp NULL DEFAULT current_timestamp(),
   lastCheckedAt timestamp NULL DEFAULT current_timestamp(),
-  PRIMARY KEY (server_ip, port),
-  INDEX ix_database_instances_01 (instance_name)
+  PRIMARY KEY (server_ip, port)
+);
+
+# database_instances 정의 테이블 스키마 생성
+drop table database_instances;
+CREATE TABLE database_instances (
+  instance_name varchar(100) NOT NULL,
+  server_ip varchar(20) NOT NULL,
+  port int(4) NOT NULL,
+  repre_yn varchar(1) DEFAULT 'Y',       -- 대표DB여부(Y-예,N-아니오)
+  status_cd varchar(1) DEFAULT 'Y',       -- 상태코드(Y-사용,N-미사용)
+  descryption varchar(2000) DEFAULT NULL,   -- 설명
+  createdAt timestamp DEFAULT current_timestamp(),
+  closedAt timestamp NULL DEFAULT current_timestamp(),
+  lastCheckedAt timestamp NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (instance_name),
+  INDEX ix_database_instances_01 (server_ip, port)
 );
 
 
