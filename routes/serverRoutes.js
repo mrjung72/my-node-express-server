@@ -18,7 +18,22 @@ const remoteDBConfig = {
 // 서버 목록 조회
 router.get('/', async (req, res) => {
   const conn = await mypool.getConnection()
-  const rows = await conn.query('SELECT * FROM servers')
+  const query = `
+            SELECT d.server_port_id
+              , m.server_ip
+              , m.corp_id 
+              , m.hostname
+              , m.env_type 
+              , d.proc_id 
+              , d.usage_type 
+              , m.role_type 
+              , m.status_cd 
+              , d.port
+              , d.stat_check_target_yn 
+            FROM servers m, servers_port d 
+            WHERE m.server_ip  = d.server_ip 
+            ORDER BY m.server_ip, d.proc_id, d.usage_type`
+  const rows = await conn.query(query)
   conn.release()
   res.json(rows[0])
 })

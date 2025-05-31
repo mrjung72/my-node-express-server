@@ -16,6 +16,9 @@ async function inputServersData(db) {
                 FROM SERVERS_TEMP
                 GROUP  BY SERVER_IP`;
         await db.execute(sql);
+        await db.execute(`insert into servers_port (server_ip, port, proc_id, usage_type, stat_check_target_yn)
+                select server_ip, port, proc_id, usage_type, check_yn
+                from servers_temp`);
         await db.execute(`SET FOREIGN_KEY_CHECKS = 1`);
         
 
