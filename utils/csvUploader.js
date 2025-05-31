@@ -34,9 +34,8 @@ async function uploadCsvFile(filePath, tableName, columns, db, isInitData) {
                 try {
                     if (isInitData) {
                         // 초기 데이터 업로드 시 기존 데이터 삭제
-                        await db.execute(`DELETE FROM ${tableName}`, null)
+                        await db.execute(`TRUNCATE TABLE ${tableName}`, null)
                     }
-                    await db.execute(`truncate table ${tableName}`, null)
                     const placeholders = rows.map(() => `(${columns.map(() => '?').join(',')})`).join(',')
                     const flatValues = rows.flat()
                     const sql = `INSERT INTO ${tableName} (${columns.join(',')}) VALUES ${placeholders}`

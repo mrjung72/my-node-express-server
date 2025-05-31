@@ -12,6 +12,7 @@ const iconv = require('iconv-lite')
 // multer 설정
 const upload = multer({ dest: 'uploads/' });
 const { uploadCsvFile } = require('../utils/csvUploader');
+const { inputServersData } = require('../utils/InitDataSetter');
 
 router.post('/members', upload.single('file'), async (req, res) => {
 
@@ -62,6 +63,7 @@ router.post('/servers', upload.single('file'), async (req, res) => {
     const columns = ['server_ip', 'hostname', 'port', 'corp_id', 'env_type', 'proc_id', 'usage_type', 'role_type', 'check_yn', 'db_name', 'descryption'] // server 테이블 컬럼
     try {
         const result = await uploadCsvFile(filePath, 'servers_temp', columns, mypool, true) 
+        await inputServersData(mypool)
         res.json(result)
     } catch (err) {
         console.error(err)
