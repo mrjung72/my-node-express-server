@@ -33,40 +33,40 @@ CREATE TABLE login_his (
 );
 
 
-# 법인별/공정별/서버환경정의 테이블
-drop table corp_proc_env_define;
-CREATE TABLE corp_proc_env_define (
-  corp_proc_env_id varchar(100) NOT NULL,
-  corp_id varchar(20) DEFAULT NULL,  -- 법인ID
-  proc_id varchar(20) DEFAULT NULL,   -- 공정ID
-  env_type varchar(10) NOT NULL,   -- 환경구분 (prod/qas/dev)
-  status_cd varchar(1) DEFAULT 'Y',       -- 상태코드(Y-사용,N-미사용)
-  descryption varchar(2000) DEFAULT NULL,   -- 설명
-  createdAt timestamp DEFAULT current_timestamp(),
-  closedAt timestamp NULL DEFAULT current_timestamp(),
-  PRIMARY KEY (corp_proc_env_id),
-  INDEX ux_corp_proc_env_define_01 (corp_id,proc_id,env_type)
-);
-
-
 # servers 테이블 정의
 drop table servers;
 CREATE TABLE servers (
-  server_port_id int(11) NOT NULL AUTO_INCREMENT,
   server_ip varchar(20) NOT NULL,
-  port int(4) NOT NULL,
   hostname varchar(100) DEFAULT NULL,
-  corp_proc_env_id varchar(100) NOT NULL,  -- 법인별/공정별/서버환경ID
-  usage_type varchar(20) NOT NULL,   -- 용도분류 (DB/WEB/WAS/APP/...)
+  corp_id varchar(20) DEFAULT NULL,  -- 법인ID
+  env_type varchar(10) NOT NULL,   -- 환경구분 (prod/qas/dev)
   role_type varchar(20) DEFAULT NULL,   -- 역할구분 (vip/active/standby/async)
   status_cd varchar(1) DEFAULT 'Y',    -- 상태코드(Y-사용,N-미사용)
   descryption varchar(2000) DEFAULT NULL,   -- 설명
   createdAt timestamp DEFAULT current_timestamp(),
   closedAt timestamp NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (server_ip),
+  INDEX ix_servers_01 (corp_id, env_type, role_type)
+);
+
+
+# servers_port 테이블 정의
+drop table servers_port;
+CREATE TABLE servers_port (
+  server_port_id int(11) NOT NULL AUTO_INCREMENT,
+  server_ip varchar(20) NOT NULL,
+  port int(4) NOT NULL,
+  proc_id varchar(20) DEFAULT NULL,   -- 공정ID
+  usage_type varchar(20) NOT NULL,   -- 용도분류 (DB/WEB/WAS/APP/...)
+  stat_cd varchar(1) DEFAULT 'Y',    -- 상태코드(Y-사용,N-미사용)
+  stat_check_target_yn varchar(1) DEFAULT 'Y',    -- 상태 체크 대상여부(Y/N)
+  descryption varchar(2000) DEFAULT NULL,   -- 설명
+  createdAt timestamp DEFAULT current_timestamp(),
+  closedAt timestamp NULL DEFAULT current_timestamp(),
   lastCheckedAt timestamp NULL DEFAULT current_timestamp(),
   PRIMARY KEY (server_port_id),
-  UNIQUE KEY uk_servers_01 (server_ip, port),
-  INDEX ix_servers_01 (corp_proc_env_id, usage_type, role_type)
+  UNIQUE KEY uk_servers_port_01 (server_ip, port),
+  INDEX ix_servers_port_01 (proc_id, usage_type)
 );
 
 
@@ -76,14 +76,15 @@ drop table database_instances;
 CREATE TABLE database_instances (
   db_instance_name varchar(100) NOT NULL,
   db_instance_type varchar(10) NOT NULL, -- DB인스턴스타입(BASIC/IF/EIF)
-  corp_proc_env_id varchar(100) NOT NULL,  -- 법인별/공정별/서버환경ID
+  server_port_id int(11) NOT NULL,
   status_cd varchar(1) DEFAULT 'Y',       -- 상태코드(Y-사용,N-미사용)
   descryption varchar(2000) DEFAULT NULL,   -- 설명
   createdAt timestamp DEFAULT current_timestamp(),
   closedAt timestamp NULL DEFAULT current_timestamp(),
   lastCheckedAt timestamp NULL DEFAULT current_timestamp(),
   PRIMARY KEY (db_instance_name),
-  INDEX ix_database_instances_01 (corp_proc_env_id, db_instance_type, db_instance_name)
+  INDEX ix_database_instances_01 (db_instance_type, db_instance_name, server_port_id),
+  FOREIGN KEY (server_port_id) REFERENCES servers_port(server_port_id)
 );
 
 
