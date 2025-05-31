@@ -16,9 +16,18 @@ async function inputServersData(db) {
                 FROM SERVERS_TEMP
                 GROUP  BY SERVER_IP`;
         await db.execute(sql);
+        
         await db.execute(`insert into servers_port (server_ip, port, proc_id, usage_type, stat_check_target_yn)
-                select server_ip, port, proc_id, usage_type, check_yn
-                from servers_temp`);
+                            select server_ip, port, proc_id, usage_type, check_yn
+                            from servers_temp`);
+        
+        await db.execute(`insert into database_instances (db_instance_name, db_instance_type, server_port_id)
+                            select db_name
+                                ,'BASIC' 
+                                ,(select p.server_port_id  from servers_port p where p.server_ip = st.server_ip and p.port = st.port) server_port_id
+                            from servers_temp st 
+                            where st.usage_type = 'DB'`);
+
         await db.execute(`SET FOREIGN_KEY_CHECKS = 1`);
         
 

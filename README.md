@@ -93,6 +93,7 @@ CREATE TABLE servers_port (
 # DB인스턴스정의 테이블
 drop table database_instances;
 CREATE TABLE database_instances (
+  db_instance_id int(11) NOT NULL AUTO_INCREMENT,
   db_instance_name varchar(100) NOT NULL,
   db_instance_type varchar(10) NOT NULL, -- DB인스턴스타입(BASIC/IF/EIF)
   server_port_id int(11) NOT NULL,
@@ -101,8 +102,8 @@ CREATE TABLE database_instances (
   createdAt timestamp DEFAULT current_timestamp(),
   closedAt timestamp NULL DEFAULT current_timestamp(),
   lastCheckedAt timestamp NULL DEFAULT current_timestamp(),
-  PRIMARY KEY (db_instance_name),
-  INDEX ix_database_instances_01 (db_instance_type, db_instance_name, server_port_id),
+  PRIMARY KEY (db_instance_id),
+  INDEX ix_database_instances_01 (db_instance_name, server_port_id),
   FOREIGN KEY (server_port_id) REFERENCES servers_port(server_port_id)
 );
 
