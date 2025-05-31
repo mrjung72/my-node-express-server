@@ -14,15 +14,19 @@ async function uploadCsvFile(filePath, tableName, columns, db) {
             }))
             .on('data', (data) => {
 
+                
                 // 필요한 컬럼만 추출해서 정렬된 배열로 구성
                 const row = columns.map(col => {
                     const value = data[col.trim()] // trim()을 사용하여 공백 제거
                     return typeof value === 'string' ? value.trim() : value
                 })
-  
+                
                 if (row.length > 0 && row[0] != null && row[0] != '') {
-                    rows.push(row)
+                    const cleanedValues = row.map(value => value === undefined ? null : value);
+                    rows.push(cleanedValues)
                 }
+
+                console.log('Row data:', row) // 디버깅용
             })
             .on('end', async () => {
                 if (rows.length === 0) return resolve({ success: false, message: 'No data' })

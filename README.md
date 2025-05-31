@@ -33,6 +33,24 @@ CREATE TABLE login_his (
 );
 
 
+# servers_temp 테이블 정의
+drop table servers_temp;
+CREATE TABLE servers_temp (
+  server_ip varchar(20) NOT NULL,
+  hostname varchar(100) DEFAULT NULL,
+  port int(4) NOT NULL,
+  corp_id varchar(20) DEFAULT NULL,  -- 법인ID
+  env_type varchar(10) NOT NULL,   -- 환경구분 (prod/qas/dev)
+  proc_id varchar(20) DEFAULT NULL,   -- 공정ID
+  usage_type varchar(20) NOT NULL,   -- 용도분류 (DB/WEB/WAS/APP/...)
+  role_type varchar(20) DEFAULT NULL,   -- 역할구분 (vip/active/standby/async)
+  check_yn varchar(1) DEFAULT 'Y',    -- 상태 체크 대상여부(Y/N)
+  db_name varchar(100) DEFAULT NULL,
+  descryption varchar(2000) DEFAULT NULL   -- 설명
+);
+
+
+
 # servers 테이블 정의
 drop table servers;
 CREATE TABLE servers (

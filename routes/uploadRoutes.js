@@ -59,9 +59,9 @@ router.post('/members', upload.single('file'), async (req, res) => {
 
 router.post('/servers', upload.single('file'), async (req, res) => {
     const filePath = req.file.path
-    const columns = ['server_ip', 'hostname', 'title', 'corp_id', 'proc_type', 'usage_type', 'env_type', 'role_type'] // server 테이블 컬럼
+    const columns = ['server_ip', 'hostname', 'port', 'corp_id', 'env_type', 'proc_id', 'usage_type', 'role_type', 'check_yn', 'db_name', 'descryption'] // server 테이블 컬럼
     try {
-        const result = await uploadCsvFile(filePath, 'servers', columns, mypool) 
+        const result = await uploadCsvFile(filePath, 'servers_temp', columns, mypool) 
         res.json(result)
     } catch (err) {
         console.error(err)
