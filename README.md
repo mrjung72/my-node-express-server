@@ -46,7 +46,8 @@ CREATE TABLE servers_temp (
   role_type varchar(20) DEFAULT NULL,   -- 역할구분 (vip/active/standby/async)
   check_yn varchar(1) DEFAULT 'Y',    -- 상태 체크 대상여부(Y/N)
   db_name varchar(100) DEFAULT NULL,
-  descryption varchar(2000) DEFAULT NULL   -- 설명
+  descryption varchar(2000) DEFAULT NULL,
+  PRIMARY KEY (server_ip, port)
 );
 
 

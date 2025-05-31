@@ -3,7 +3,7 @@ const fs = require('fs')
 const iconv = require('iconv-lite')
 const csv = require('csv-parser')
 
-async function uploadCsvFile(filePath, tableName, columns, db) {
+async function uploadCsvFile(filePath, tableName, columns, db, isInitData) {
     return new Promise((resolve, reject) => {
         const rows = []
 
@@ -26,12 +26,17 @@ async function uploadCsvFile(filePath, tableName, columns, db) {
                     rows.push(cleanedValues)
                 }
 
-                console.log('Row data:', row) // 디버깅용
+                // console.log('Row data:', row) // 디버깅용
             })
             .on('end', async () => {
                 if (rows.length === 0) return resolve({ success: false, message: 'No data' })
 
                 try {
+                    if (isInitData) {
+                        // 초기 데이터 업로드 시 기존 데이터 삭제
+                        await db.execute(`DELETE FROM ${tableName}`, null)
+                    }
+                    await db.execute(`truncate table ${tableName}`, null)
                     const placeholders = rows.map(() => `(${columns.map(() => '?').join(',')})`).join(',')
                     const flatValues = rows.flat()
                     const sql = `INSERT INTO ${tableName} (${columns.join(',')}) VALUES ${placeholders}`
