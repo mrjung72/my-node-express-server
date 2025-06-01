@@ -14,6 +14,7 @@ CREATE TABLE members (
   user_pc_ip varchar(20) NULL,   -- 사용자 PC 아이피
   reg_pc_ip varchar(20) NULL,   -- 등록자 PC 아이피
   reg_userid varchar(20) NULL,   -- 등록자ID
+  reg_method varchar(20) NULL,   -- 등록방식(CSV, ...)
   createdAt timestamp NULL DEFAULT current_timestamp(),
   updatedAt timestamp NULL DEFAULT NULL,
   PRIMARY KEY (userid),

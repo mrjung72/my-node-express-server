@@ -8,22 +8,22 @@ const fs = require('fs');
 const csv = require('csv-parser');
 const bcrypt = require('bcrypt');
 const iconv = require('iconv-lite')
+const authenticateJWT = require('../middleware/auth')
 
 // multer 설정
 const upload = multer({ dest: 'uploads/' });
 const { uploadCsvFile } = require('../utils/csvUploader');
 const { inputServersData } = require('../utils/InitDataSetter');
 
-router.post('/members', upload.single('file'), async (req, res) => {
+router.post('/members', authenticateJWT, upload.single('file'), async (req, res) => {
 
     const filePath = req.file.path
     const results = []
     const insertedRows = [];
 
-    const regUserId = req.user?.id // 인증 미들웨어에서 세팅
-    console.log(`Registering user: ${req.user}`)
+    const regUserId = req.user?.userid // 인증 미들웨어에서 세팅
     const regUserIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress
-    console.log(`Registering IP: ${regUserIp}, Registered by: ${regUserId}`)
+    console.log(`This Csv members were registered by ${req.user?.userid} on ${regUserIp}`)
 
     fs.createReadStream(filePath)
         .pipe(iconv.decodeStream('euc-kr')) // <-- 인코딩 변환
@@ -43,8 +43,8 @@ router.post('/members', upload.single('file'), async (req, res) => {
                     }
                     const hashedPassword = await bcrypt.hash(row.password, 10)
 
-                    const sql = 'INSERT INTO members (name, email, userid, password, isAdmin, user_pc_ip, reg_pc_ip, reg_userid) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
-                    await conn.query(sql, [row.name, row.email, row.userid, hashedPassword, row.isAdmin, row.user_pc_ip, regUserIp, regUserId])
+                    const sql = 'INSERT INTO members (name, email, userid, password, isAdmin, user_pc_ip, reg_pc_ip, reg_userid, reg_method) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+                    await conn.query(sql, [row.name, row.email, row.userid, hashedPassword, row.isAdmin, row.user_pc_ip, regUserIp, regUserId, 'CSV'])
                     insertedRows.push(1);
                 }
 
@@ -59,7 +59,7 @@ router.post('/members', upload.single('file'), async (req, res) => {
 })
 
 
-router.post('/servers', upload.single('file'), async (req, res) => {
+router.post('/servers', authenticateJWT, upload.single('file'), async (req, res) => {
     const filePath = req.file.path
     const columns = ['server_ip', 'hostname', 'port', 'corp_id', 'env_type', 'proc_id', 'usage_type', 'role_type', 'check_yn', 'db_name', 'descryption'] // server 테이블 컬럼
     try {
