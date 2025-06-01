@@ -37,7 +37,7 @@ router.post('/', authenticateJWT.optional, async (req, res) => {
     res.status(201).json({ userid, name, email, status_cd, isAdmin })
   } catch (err) {
     console.error(err)
-    res.status(500).send('Insert failed')
+    res.status(500).send('[ERROR] ' + err.message)
   }
 })
 
