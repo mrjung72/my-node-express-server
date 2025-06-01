@@ -34,6 +34,7 @@ router.post('/members', authenticateJWT, upload.single('file'), async (req, res)
         .on('end', async () => {
             try {
                 const conn = await mypool.getConnection()
+                const sql = 'INSERT INTO members (name, email, userid, password, isAdmin, user_pc_ip, reg_pc_ip, reg_userid, reg_method) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
 
                 for (let row of results) {
                     // 유효성 검사 및 중복 체크 예시
@@ -43,10 +44,12 @@ router.post('/members', authenticateJWT, upload.single('file'), async (req, res)
                     }
                     const hashedPassword = await bcrypt.hash(row.password, 10)
 
-                    const sql = 'INSERT INTO members (name, email, userid, password, isAdmin, user_pc_ip, reg_pc_ip, reg_userid, reg_method) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
                     await conn.query(sql, [row.name, row.email, row.userid, hashedPassword, row.isAdmin, row.user_pc_ip, regUserIp, regUserId, 'CSV'])
                     insertedRows.push(1);
                 }
+
+                const sql_his = 'INSERT INTO csv_upload_his (userid, user_pc_ip, upload_type, upload_data_cnt) VALUES (?, ?, ?, ?)';
+                await conn.query(sql_his, [regUserId, regUserIp, 'members', insertedRows.length]);
 
                 conn.release()
                 fs.unlinkSync(filePath) // 업로드된 파일 삭제
@@ -60,11 +63,21 @@ router.post('/members', authenticateJWT, upload.single('file'), async (req, res)
 
 
 router.post('/servers', authenticateJWT, upload.single('file'), async (req, res) => {
+
+    const regUserId = req.user?.userid // 인증 미들웨어에서 세팅
+    const regUserIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress
+    console.log(`This Csv servers were registered by ${req.user?.userid} on ${regUserIp}`)
     const filePath = req.file.path
     const columns = ['server_ip', 'hostname', 'port', 'corp_id', 'env_type', 'proc_id', 'usage_type', 'role_type', 'check_yn', 'db_name', 'descryption'] // server 테이블 컬럼
     try {
-        const result = await uploadCsvFile(filePath, 'servers_temp', columns, mypool, true) 
-        await inputServersData(mypool)
+        const result = await uploadCsvFile(filePath, 'servers_temp', columns, mypool, true)
+        console.log(result)
+        if (result.success) {
+            await inputServersData(mypool)
+            const sql_his = 'INSERT INTO csv_upload_his (userid, user_pc_ip, upload_type, upload_data_cnt) VALUES (?, ?, ?, ?)'
+            await mypool.execute(sql_his, [regUserId, regUserIp, 'servers', result.insertedRows])
+        }   
+        
         res.json(result)
     } catch (err) {
         console.error(err)

@@ -40,7 +40,8 @@ async function uploadCsvFile(filePath, tableName, columns, db, isInitData) {
                     const flatValues = rows.flat()
                     const sql = `INSERT INTO ${tableName} (${columns.join(',')}) VALUES ${placeholders}`
                     await db.execute(sql, flatValues)
-                    resolve({ success: true, message: `${rows.length} rows inserted.` })
+
+                    resolve({ success: true, message: `${rows.length} rows inserted.` , insertedRows: rows.length })
                 } catch (err) {
                     reject(err)
                 }

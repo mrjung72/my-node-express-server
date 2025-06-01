@@ -39,6 +39,23 @@ CREATE TABLE login_his (
 );
 
 
+# csv_upload_his 테이블 스키마 생성
+drop table csv_upload_his;
+CREATE TABLE csv_upload_his (
+  id int(11) NOT NULL AUTO_INCREMENT,
+  userid varchar(20) NOT NULL,
+  user_pc_ip varchar(20) NOT NULL,
+  upload_type varchar(20) NOT NULL,   -- 업로드 구분(members, servers, .....)
+  upload_data_cnt int(11) NOT NULL,   -- 업로드 데이터 건수
+  descryption varchar(4000) DEFAULT NULL,
+  createdAt timestamp NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (id),
+  INDEX ix_csv_upload_his_01 (userid),
+  INDEX ix_csv_upload_his_02 (user_pc_ip)
+);
+
+
+
 # servers_temp 테이블 정의
 drop table servers_temp;
 CREATE TABLE servers_temp (
@@ -53,6 +70,8 @@ CREATE TABLE servers_temp (
   check_yn varchar(1) DEFAULT 'Y',    -- 상태 체크 대상여부(Y/N)
   db_name varchar(100) DEFAULT NULL,
   descryption varchar(2000) DEFAULT NULL,
+  reg_pc_ip varchar(20) NULL,   -- 등록자 PC 아이피
+  reg_userid varchar(20) NULL,   -- 등록자ID
   PRIMARY KEY (server_ip, port)
 );
 
