@@ -18,7 +18,7 @@ router.get('/', async (req, res) => {
 })
 
 // 회원 등록
-router.post('/', authenticateJWT, async (req, res) => {
+router.post('/', authenticateJWT.optional, async (req, res) => {
   let { name, email, userid, password, status_cd, isAdmin, user_pc_ip } = req.body
   const regUserId = req.user?.userid // 인증 미들웨어에서 세팅
   const regUserIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress

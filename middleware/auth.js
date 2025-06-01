@@ -1,22 +1,31 @@
 // middleware/auth.js
-const jwt = require('jsonwebtoken')
-const SECRET_KEY = process.env.JWT_SECRET
+const jwt = require('jsonwebtoken');
 
 const authenticateJWT = (req, res, next) => {
-  const authHeader = req.headers.authorization
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return res.sendStatus(401);
 
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    const token = authHeader.split(' ')[1]
-    try {
-      const decoded = jwt.verify(token, SECRET_KEY)
-      req.user = decoded 
-      next()
-    } catch (err) {
-      return res.status(403).json({ message: 'Invalid or expired token' })
-    }
-  } else {
-    return res.status(401).json({ message: 'Authorization header missing' })
-  }
-}
+  const token = authHeader.split(' ')[1];
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    if (err) return res.sendStatus(403);
+    req.user = user;
+    next();
+  });
+};
 
-module.exports = authenticateJWT
+// 옵션으로 인증 (없어도 통과)
+authenticateJWT.optional = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+
+  console.log('Optional auth header:', authHeader);
+  if (!authHeader) return next(); // 인증 없이 통과
+
+  const token = authHeader.split(' ')[1];
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    console.log('JWT verification result:', { err, user });
+    if (!err) req.user = user;
+    return next(); // 인증 실패여도 무조건 통과
+  });
+};
+
+module.exports = authenticateJWT;
