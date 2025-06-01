@@ -20,6 +20,11 @@ router.post('/members', upload.single('file'), async (req, res) => {
     const results = []
     const insertedRows = [];
 
+    const regUserId = req.user?.id // 인증 미들웨어에서 세팅
+    console.log(`Registering user: ${req.user}`)
+    const regUserIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress
+    console.log(`Registering IP: ${regUserIp}, Registered by: ${regUserId}`)
+
     fs.createReadStream(filePath)
         .pipe(iconv.decodeStream('euc-kr')) // <-- 인코딩 변환
         .pipe(csv({
@@ -36,14 +41,10 @@ router.post('/members', upload.single('file'), async (req, res) => {
                         console.log('유효하지 않은 데이터:', row)
                         continue
                     }
-
                     const hashedPassword = await bcrypt.hash(row.password, 10)
-                    const userid = row.email.split('@')[0]; // 이메일에서 userid 추출
 
-                    await conn.query(
-                        'INSERT INTO members(name, email, userid, password, isAdmin) VALUES(?, ?, ?, ?, ?)',
-                        [row.name, row.email, userid, hashedPassword, row.isAdmin]
-                    )
+                    const sql = 'INSERT INTO members (name, email, userid, password, isAdmin, user_pc_ip, reg_pc_ip, reg_userid) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+                    await conn.query(sql, [row.name, row.email, row.userid, hashedPassword, row.isAdmin, row.user_pc_ip, regUserIp, regUserId])
                     insertedRows.push(1);
                 }
 

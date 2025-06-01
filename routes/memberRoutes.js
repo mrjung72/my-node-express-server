@@ -19,12 +19,20 @@ router.get('/', async (req, res) => {
 
 // 회원 등록
 router.post('/', async (req, res) => {
-  const { name, email, userid, password, isAdmin } = req.body
+  let { name, email, userid, password, isAdmin, user_pc_ip } = req.body
+  const regUserId = req.user?.id // 인증 미들웨어에서 세팅
+  const regUserIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress
+  console.log(`Registering user: ${userid}, IP: ${regUserIp}, Registered by: ${regUserId}`)
+
+  if (!user_pc_ip || user_pc_ip.trim() === '') {
+    user_pc_ip  = regUserIp
+  }
+  
   try {
     const conn = await mypool.getConnection()
     const hashedpassword = await bcrypt.hash(password, 10)
-    const sql = 'INSERT INTO members (name, email, userid, password, isAdmin) VALUES (?, ?, ?, ?, ?)'
-    const [result] = await conn.query(sql, [name, email, userid, hashedpassword, isAdmin ? 1 : 0])
+    const sql = 'INSERT INTO members (name, email, userid, password, isAdmin, user_pc_ip, reg_pc_ip, reg_userid) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+    const [result] = await conn.query(sql, [name, email, userid, hashedpassword, isAdmin ? 1 : 0, user_pc_ip, regUserIp, regUserId])
     conn.release()
     res.status(201).json({ userid: result.insertId, name, email, userid, password, isAdmin })
   } catch (err) {

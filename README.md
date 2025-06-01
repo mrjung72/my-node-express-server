@@ -11,11 +11,14 @@ CREATE TABLE members (
   password varchar(255) NOT NULL,
   status_cd varchar(1) DEFAULT 'Y',    -- 상태코드(Y-사용,N-미사용)
   isAdmin tinyint(1) DEFAULT 0,
-  reg_pc_ip varchar(20) NULL,   -- 등록자 PC 아이피
+  user_pc_ip varchar(20) NOT NULL,   -- 사용자 PC 아이피
+  reg_pc_ip varchar(20) NOT NULL,   -- 등록자 PC 아이피
+  reg_userid varchar(20) NULL,   -- 등록자ID
   createdAt timestamp NULL DEFAULT current_timestamp(),
   updatedAt timestamp NULL DEFAULT NULL,
   PRIMARY KEY (userid),
   UNIQUE KEY uk_members_01 (email),
+  UNIQUE KEY uk_members_02 (user_pc_ip),
   INDEX ix_members_01 (name)
 );
 
