@@ -72,7 +72,7 @@ CREATE TABLE servers_temp (
   descryption varchar(2000) DEFAULT NULL,
   reg_pc_ip varchar(20) NULL,   -- 등록자 PC 아이피
   reg_userid varchar(20) NULL,   -- 등록자ID
-  PRIMARY KEY (server_ip, port)
+  PRIMARY KEY (server_ip, port, db_name)
 );
 
 

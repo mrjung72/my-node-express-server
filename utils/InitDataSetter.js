@@ -18,8 +18,13 @@ async function inputServersData(db) {
         await db.execute(sql);
         
         await db.execute(`insert into servers_port (server_ip, port, proc_id, usage_type, stat_check_target_yn)
-                            select server_ip, port, proc_id, usage_type, check_yn
-                            from servers_temp`);
+                            select server_ip
+                                , port
+                                , max(proc_id)
+                                , max(usage_type)
+                                , max(check_yn)
+                            from servers_temp
+                            group by server_ip, port`);
         
         await db.execute(`insert into database_instances (db_instance_name, db_instance_type, server_port_id)
                             select db_name
