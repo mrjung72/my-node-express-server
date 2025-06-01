@@ -9,7 +9,7 @@ CREATE TABLE members (
   name varchar(100) NOT NULL,
   email varchar(255) NOT NULL,
   password varchar(255) NOT NULL,
-  status_cd varchar(1) DEFAULT 'Y',    -- 상태코드(Y-사용,N-미사용)
+  status_cd varchar(1) DEFAULT 'A',    -- 상태코드(Y-정상,N-탈퇴,A-승인대기)
   isAdmin tinyint(1) DEFAULT 0,
   user_pc_ip varchar(20) NULL,   -- 사용자 PC 아이피
   reg_pc_ip varchar(20) NULL,   -- 등록자 PC 아이피

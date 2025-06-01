@@ -8,7 +8,7 @@ const jwt = require('jsonwebtoken')
 router.get('/', async (req, res) => {
   try {
     const conn = await mypool.getConnection()
-    const rows = await conn.query('SELECT userid, name, email, isadmin, createdAt FROM members')
+    const rows = await conn.query('SELECT userid, name, email, isAdmin, createdAt FROM members')
     conn.release()
     res.json(rows[0])
   } catch (err) {
@@ -19,7 +19,7 @@ router.get('/', async (req, res) => {
 
 // 회원 등록
 router.post('/', async (req, res) => {
-  let { name, email, userid, password, isAdmin, user_pc_ip } = req.body
+  let { name, email, userid, password, status_cd, isAdmin, user_pc_ip } = req.body
   const regUserId = req.user?.id // 인증 미들웨어에서 세팅
   const regUserIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress
   console.log(`Registering user: ${userid}, IP: ${regUserIp}, Registered by: ${regUserId}`)
@@ -31,10 +31,10 @@ router.post('/', async (req, res) => {
   try {
     const conn = await mypool.getConnection()
     const hashedpassword = await bcrypt.hash(password, 10)
-    const sql = 'INSERT INTO members (name, email, userid, password, isAdmin, user_pc_ip, reg_pc_ip, reg_userid) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
-    const [result] = await conn.query(sql, [name, email, userid, hashedpassword, isAdmin ? 1 : 0, user_pc_ip, regUserIp, regUserId])
+    const sql = 'INSERT INTO members (name, email, userid, password, status_cd, isAdmin, user_pc_ip, reg_pc_ip, reg_userid) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    const [result] = await conn.query(sql, [name, email, userid, hashedpassword, status_cd ? status_cd : 'A', isAdmin ? 1 : 0, user_pc_ip, regUserIp, regUserId])
     conn.release()
-    res.status(201).json({ userid: result.insertId, name, email, userid, password, isAdmin })
+    res.status(201).json({ userid: result.insertId, name, email, userid, password, status_cd, isAdmin })
   } catch (err) {
     console.error(err)
     res.status(500).send('Insert failed')
