@@ -2,7 +2,7 @@ const express = require('express')
 const router = express.Router()
 const mypool = require('../db')
 const bcrypt = require('bcrypt')
-const jwt = require('jsonwebtoken')
+const authenticateJWT = require('../middleware/auth')
 
 // 회원 목록 조회
 router.get('/', async (req, res) => {
@@ -18,11 +18,11 @@ router.get('/', async (req, res) => {
 })
 
 // 회원 등록
-router.post('/', async (req, res) => {
+router.post('/', authenticateJWT, async (req, res) => {
   let { name, email, userid, password, status_cd, isAdmin, user_pc_ip } = req.body
-  const regUserId = req.user?.id // 인증 미들웨어에서 세팅
+  const regUserId = req.user?.userid // 인증 미들웨어에서 세팅
   const regUserIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress
-  console.log(`Registering user: ${userid}, IP: ${regUserIp}, Registered by: ${regUserId}`)
+  console.log(`User ${userid} was registered by ${req.user?.userid} on ${regUserIp}`)
 
   if (!user_pc_ip || user_pc_ip.trim() === '') {
     user_pc_ip  = regUserIp
@@ -34,7 +34,7 @@ router.post('/', async (req, res) => {
     const sql = 'INSERT INTO members (name, email, userid, password, status_cd, isAdmin, user_pc_ip, reg_pc_ip, reg_userid) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
     const [result] = await conn.query(sql, [name, email, userid, hashedpassword, status_cd ? status_cd : 'A', isAdmin ? 1 : 0, user_pc_ip, regUserIp, regUserId])
     conn.release()
-    res.status(201).json({ userid: result.insertId, name, email, userid, password, status_cd, isAdmin })
+    res.status(201).json({ userid, name, email, status_cd, isAdmin })
   } catch (err) {
     console.error(err)
     res.status(500).send('Insert failed')
