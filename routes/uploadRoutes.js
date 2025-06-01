@@ -42,7 +42,7 @@ router.post('/members', authenticateJWT, upload.single('file'), async (req, res)
                         console.log('유효하지 않은 데이터:', row)
                         continue
                     }
-                    const hashedPassword = await bcrypt.hash(row.password, 10)
+                    const hashedPassword = await bcrypt.hash(process.env.USER_INIT_PASSWORD, 10)
 
                     await conn.query(sql, [row.name, row.email, row.userid, hashedPassword, row.isAdmin, row.user_pc_ip, regUserIp, regUserId, 'CSV'])
                     insertedRows.push(1);
