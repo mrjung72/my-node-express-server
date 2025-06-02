@@ -3,6 +3,7 @@ const router = express.Router()
 const fs = require('fs')
 const mssql = require('mssql')
 const mypool = require('../db')
+const { authenticateJWT, requireAdmin } = require('../middleware/auth')
 
 const remoteDBConfig = {
   user: 'sahara',
@@ -16,7 +17,7 @@ const remoteDBConfig = {
 }
 
 // 서버 목록 조회
-router.get('/', async (req, res) => {
+router.get('/', authenticateJWT, async (req, res) => {
   const conn = await mypool.getConnection()
   const query = `
             SELECT d.server_port_id
@@ -39,7 +40,7 @@ router.get('/', async (req, res) => {
 })
 
 // 개별 서버 상태 확인
-router.get('/status/:id', async (req, res) => {
+router.get('/status/:id', authenticateJWT, async (req, res) => {
   const { id } = req.params
   const myconn = await mypool.getConnection()
   const rows = await myconn.execute('SELECT ip FROM servers WHERE id = ?', [id])
@@ -59,7 +60,7 @@ router.get('/status/:id', async (req, res) => {
 })
 
 // 여러 서버 상태 확인
-router.get('/status', async (req, res) => {
+router.get('/status', authenticateJWT, async (req, res) => {
   const ipList = fs.readFileSync('resources/remotedb_server_ips.txt', 'utf-8')
     .split('\n')
     .map(ip => ip.trim())

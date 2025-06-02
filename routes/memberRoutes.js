@@ -5,7 +5,7 @@ const bcrypt = require('bcrypt')
 const { authenticateJWT, requireAdmin } = require('../middleware/auth')
 
 // 회원 목록 조회
-router.get('/', async (req, res) => {
+router.get('/', authenticateJWT, async (req, res) => {
   try {
     const conn = await mypool.getConnection()
     const rows = await conn.query('SELECT userid, name, email, isAdmin, status_cd, createdAt FROM members')
