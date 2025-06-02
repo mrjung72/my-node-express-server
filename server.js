@@ -14,12 +14,14 @@ const memberRoutes = require('./routes/memberRoutes')
 const serverRoutes = require('./routes/serverRoutes')
 const uploadRoutes = require('./routes/uploadRoutes')
 const loginRoutes = require('./routes/loginRoutes')
+const myInfoRoutes = require('./routes/myInfoRoutes')
 
 // 📌 라우터 등록
 app.use('/api/members', memberRoutes)
 app.use('/api/servers', serverRoutes)
 app.use('/api/upload', uploadRoutes)
 app.use('/api/login', loginRoutes)
+app.use('/api/me', myInfoRoutes)
 
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`)
