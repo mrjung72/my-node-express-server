@@ -17,6 +17,34 @@ router.get('/', async (req, res) => {
   }
 })
 
+// 회원ID 중복 확인
+router.get('/check-id', async (req, res) => {
+
+  const { userid } = req.query
+  const conn = await mypool.getConnection()
+  const row = await conn.query('SELECT * FROM members WHERE userid = ?', [userid])
+  conn.release()
+
+  if (row[0] && row[0][0] && row[0][0].userid) {
+    return res.status(409).json({ message: '이미 사용 중인 아이디입니다.' });
+  }
+  return res.json({ message: '사용 가능한 아이디입니다.' });
+});
+
+// 이메일 중복 확인
+router.get('/check-email', async (req, res) => {
+
+  const { email } = req.query
+  const conn = await mypool.getConnection()
+  const row = await conn.query('SELECT * FROM members WHERE email = ?', [email])
+  conn.release()
+
+  if (row[0] && row[0][0] && row[0][0].email) {
+    return res.status(409).json({ message: '이미 등록된 이메일입니다.' });
+  }
+  return res.json({ message: '사용 가능한 이메일입니다.' });
+});
+
 // 회원 등록 (관리자에 의한)
 router.post('/', authenticateJWT, requireAdmin, async (req, res) => {
 
