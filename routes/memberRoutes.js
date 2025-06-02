@@ -48,17 +48,17 @@ router.get('/check-email', async (req, res) => {
 // 회원 등록 (관리자에 의한)
 router.post('/', authenticateJWT, requireAdmin, async (req, res) => {
 
-  let { name, email, userid, password, status_cd, isAdmin, user_pc_ip } = req.body
+  let { name, email, userid, isAdmin, user_pc_ip } = req.body
   const adminId = req.user?.userid // 인증 미들웨어에서 세팅
   const adminPcIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress
   
   try {
     const conn = await mypool.getConnection()
-    const hashedpassword = await bcrypt.hash(password, 10)
+    const hashedPassword = await bcrypt.hash(process.env.USER_INIT_PASSWORD, 10)
     const sql = 'INSERT INTO members (name, email, userid, password, status_cd, isAdmin, user_pc_ip, reg_pc_ip, reg_userid) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
-    const [result] = await conn.query(sql, [name, email, userid, hashedpassword, status_cd, isAdmin, user_pc_ip, adminPcIp, adminId])
+    const [result] = await conn.query(sql, [name, email, userid, hashedPassword, 'Y', isAdmin, user_pc_ip, adminPcIp, adminId])
     conn.release()
-    res.status(201).json({ userid, name, email, status_cd, isAdmin })
+    res.status(201).json({ userid, name, email, isAdmin })
   } catch (err) {
     console.error(err)
     res.status(500).send('[ERROR] ' + err.message)
