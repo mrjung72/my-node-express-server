@@ -29,11 +29,11 @@ router.put('/', authenticateJWT, async (req, res) => {
   const regUserIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress
 
   if (!userid) {
-    return res.status(400).send('User ID is required')
+    return res.status(400).send('[ERROR] User ID is required')
   } else if (!name) {
-    return res.status(400).send('Name field is required')
+    return res.status(401).send('[ERROR] Name field is required')
   } else if (!email || !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
-    return res.status(400).send('Invalid email format') 
+    return res.status(402).send('[ERROR] Invalid email format') 
   }
 
   try {
@@ -56,20 +56,23 @@ router.post('/', async (req, res) => {
   const userPcIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress
 
   if (!userid || !/^[a-zA-Z0-9]+$/.test(userid)) {
-    return res.status(400).send('User ID can only contain alphanumeric characters')
-  } else if (!email || !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
-    return res.status(400).send('Invalid email format')
+    return res.status(411).send('[ERROR] User ID can only contain alphanumeric characters')
+  } else if (userid.toLowerCase().startsWith('admin')) {
+    return res.status(412).send('[ERROR] User ID that start with "admin" is not allowed')
+  }
+  else if (!email || !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
+    return res.status(413).send('[ERROR] Invalid email format')
   } else if (!name) {
-    return res.status(400).send('Name field is required')
+    return res.status(414).send('[ERROR] Name field is required')
   } else if (!password || password.length < 4) {
-    return res.status(400).send('Password must be at least 4 characters long')
+    return res.status(415).send('[ERROR] Password must be at least 4 characters long')
   }     
   
   try {
     const conn = await mypool.getConnection()
     const hashedpassword = await bcrypt.hash(password, 10)
     const sql = 'INSERT INTO members (name, email, userid, password, user_pc_ip) VALUES (?, ?, ?, ?, ?)'
-    const [result] = await conn.query(sql, [name, email, userid, hashedpassword, userPcIp])
+    const [result] = await conn.query(sql, [name, email.toLowerCase(), userid.toLowerCase(), hashedpassword, userPcIp])
     conn.release()
     res.status(201).json({ userid, name, email })
   } catch (err) {
