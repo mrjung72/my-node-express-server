@@ -10,6 +10,7 @@ const admin = {
     email: 'admin@site.com',
     password: '$2b$10$jYfAmjcPsI4AWmrY2a0znOj0jRfCYcIZvXPtCmXhqOurpMmToWD6W',
     name: '관리자',
+    status_cd: 'Y', // Y: 정상, A: 승인대기, N: 탈퇴
     isAdmin : 1,
 }
 
@@ -43,10 +44,24 @@ router.post('/', async (req, res) => {
             }
             
         }
-        
 
         if (!user) {
           return res.status(401).json({ message: `미등록 사용자 입니다.` })
+        }
+        else if (!user.status_cd ) {
+          return res.status(401).json({ message: `비정상 사용자 입니다.` })
+        }
+        else if (user.status_cd !== 'Y') {
+            
+            if (user.status_cd === 'A') {
+                return res.status(401).json({ message: `승인 대기중인 사용자 입니다.` })
+            }
+            else if (user.status_cd === 'N') {
+                return res.status(401).json({ message: `탈퇴처리된 사용자 입니다.` })
+            }
+            else {
+                return res.status(401).json({ message: `미정의 상태코드(${user.status_cd})의 사용자 입니다.` })
+            }
         }
 
         const isMatch = await bcrypt.compare(password, user.password)
@@ -54,7 +69,7 @@ router.post('/', async (req, res) => {
             return res.status(401).json({ message: '비밀번호가 일치하지 않습니다.' })
         }
 
-        const token = jwt.sign({ userid: user.userid, email: user.email }, process.env.JWT_SECRET, { expiresIn: '1h' })
+        const token = jwt.sign({ userid: user.userid, email: user.email, isAdmin: user.isAdmin }, process.env.JWT_SECRET, { expiresIn: '1h' })
 
         res.json({
             message: '로그인 성공',

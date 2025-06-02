@@ -9,13 +9,13 @@ CREATE TABLE members (
   name varchar(100) NOT NULL,
   email varchar(255) NOT NULL,
   password varchar(255) NOT NULL,
-  status_cd varchar(1) DEFAULT 'A',    -- 상태코드(Y-정상,N-탈퇴,A-승인대기)
-  isAdmin tinyint(1) DEFAULT 0,
+  status_cd varchar(1) NOT NULL DEFAULT 'A',    -- 상태코드(Y-정상,N-탈퇴,A-승인대기)
+  isAdmin tinyint(1) NOT NULL DEFAULT 0,
   user_pc_ip varchar(20) NULL,   -- 사용자 PC 아이피
   reg_pc_ip varchar(20) NULL,   -- 등록자 PC 아이피
   reg_userid varchar(20) NULL,   -- 등록자ID
   reg_method varchar(20) NULL,   -- 등록방식(CSV, ...)
-  createdAt timestamp NULL DEFAULT current_timestamp(),
+  createdAt timestamp NOT NULL DEFAULT current_timestamp(),
   updatedAt timestamp NULL DEFAULT NULL,
   PRIMARY KEY (userid),
   UNIQUE KEY uk_members_01 (email),
