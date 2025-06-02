@@ -2,12 +2,19 @@
 const jwt = require('jsonwebtoken');
 
 const authenticateJWT = (req, res, next) => {
+
   const authHeader = req.headers.authorization;
-  if (!authHeader) return res.sendStatus(401);
+
+  if (!authHeader) {
+    return res.status(401).json({ message: '인증 토큰이 필요합니다.' });
+  }
 
   const token = authHeader.split(' ')[1];
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-    if (err) return res.sendStatus(403);
+    if (err) {
+      return res.status(403).json({ message: '토큰이 유효하지 않거나 만료되었습니다.' });
+    }
+
     req.user = user;
     next();
   });
@@ -28,4 +35,11 @@ authenticateJWT.optional = (req, res, next) => {
   });
 };
 
-module.exports = authenticateJWT;
+const requireAdmin = (req, res, next) => {
+  if (!req.user || !req.user.isAdmin) {
+    return res.status(403).json({ message: '관리자 권한이 필요합니다.' });
+  }
+  next();
+};
+
+module.exports = { authenticateJWT, requireAdmin };
