@@ -26,6 +26,16 @@ router.put('/', authenticateJWT, async (req, res) => {
 
   const { name, email} = req.body
   const userid = req.user?.userid
+  const regUserIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress
+
+  if (!userid) {
+    return res.status(400).send('User ID is required')
+  } else if (!name) {
+    return res.status(400).send('Name field is required')
+  } else if (!email || !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
+    return res.status(400).send('Invalid email format') 
+  }
+
   try {
     const conn = await mypool.getConnection()
     const sql = 'UPDATE members SET name = ?, email = ?, updatedAt = current_timestamp() WHERE userid = ?'
@@ -44,6 +54,16 @@ router.post('/', async (req, res) => {
 
   const { name, email, userid, password } = req.body
   const userPcIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress
+
+  if (!userid || !/^[a-zA-Z0-9]+$/.test(userid)) {
+    return res.status(400).send('User ID can only contain alphanumeric characters')
+  } else if (!email || !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
+    return res.status(400).send('Invalid email format')
+  } else if (!name) {
+    return res.status(400).send('Name field is required')
+  } else if (!password || password.length < 4) {
+    return res.status(400).send('Password must be at least 4 characters long')
+  }     
   
   try {
     const conn = await mypool.getConnection()
