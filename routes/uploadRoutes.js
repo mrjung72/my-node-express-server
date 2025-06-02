@@ -8,7 +8,7 @@ const fs = require('fs');
 const csv = require('csv-parser');
 const bcrypt = require('bcrypt');
 const iconv = require('iconv-lite')
-const authenticateJWT = require('../middleware/auth')
+const {authenticateJWT} = require('../middleware/auth')
 
 // multer 설정
 const upload = multer({ dest: 'uploads/' });
