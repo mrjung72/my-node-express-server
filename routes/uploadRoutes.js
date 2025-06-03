@@ -34,7 +34,7 @@ router.post('/members', authenticateJWT, upload.single('file'), async (req, res)
         .on('end', async () => {
             try {
                 const conn = await mypool.getConnection()
-                const sql = 'INSERT INTO members (name, email, userid, password, isAdmin, user_pc_ip, reg_pc_ip, reg_userid, reg_method) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+                const sql = 'INSERT INTO members (name, email, userid, password, isAdmin, status_cd, user_pc_ip, reg_pc_ip, reg_userid, reg_method) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
 
                 for (let row of results) {
                     // 유효성 검사 및 중복 체크 예시
@@ -43,8 +43,7 @@ router.post('/members', authenticateJWT, upload.single('file'), async (req, res)
                         continue
                     }
                     const hashedPassword = await bcrypt.hash(process.env.USER_INIT_PASSWORD, 10)
-
-                    await conn.query(sql, [row.name, row.email, row.userid, hashedPassword, row.isAdmin, row.user_pc_ip, regUserIp, regUserId, 'CSV'])
+                    await conn.query(sql, [row.name, row.email, row.userid, hashedPassword, row.isAdmin, 'Y', row.user_pc_ip, regUserIp, regUserId, 'CSV'])
                     insertedRows.push(1);
                 }
 
