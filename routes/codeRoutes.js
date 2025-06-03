@@ -3,7 +3,7 @@ const router = express.Router()
 const mypool = require('../db')
 
 
-// 내정보 조회
+// 그룹코드별 코드 정보 조회
 router.get('/:groupCode', async (req, res) => {
 
     const { groupCode } = req.params

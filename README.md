@@ -164,6 +164,7 @@ CREATE TABLE common_codes (
   group_code varchar(50) NOT NULL,
   code varchar(50) NOT NULL,
   label varchar(100) NOT NULL,
+  use_yn varchar(1) NOT NULL DEFAULT 'Y',
   PRIMARY KEY (group_code, code)
 );
 
