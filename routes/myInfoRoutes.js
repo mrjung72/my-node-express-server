@@ -2,7 +2,7 @@ const express = require('express')
 const router = express.Router()
 const mypool = require('../db')
 const bcrypt = require('bcrypt')
-const { authenticateJWT } = require('../middleware/auth')
+const { authenticateJWT } = require('../middlewares/auth')
 
 
 // 내정보 조회

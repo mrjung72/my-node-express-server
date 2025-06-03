@@ -2,7 +2,7 @@ const express = require('express')
 const router = express.Router()
 const mypool = require('../db')
 const bcrypt = require('bcrypt')
-const { authenticateJWT, requireAdmin } = require('../middleware/auth')
+const { authenticateJWT, requireAdmin } = require('../middlewares/auth')
 
 // 회원 목록 조회
 router.get('/', authenticateJWT, async (req, res) => {

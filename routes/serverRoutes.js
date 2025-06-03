@@ -3,7 +3,7 @@ const router = express.Router()
 const fs = require('fs')
 const mssql = require('mssql')
 const mypool = require('../db')
-const { authenticateJWT, requireAdmin } = require('../middleware/auth')
+const { authenticateJWT, requireAdmin } = require('../middlewares/auth')
 
 const remoteDBConfig = {
   user: 'sahara',
