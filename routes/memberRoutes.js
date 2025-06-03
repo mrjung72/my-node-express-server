@@ -98,4 +98,29 @@ router.delete('/:userid', authenticateJWT, requireAdmin, async (req, res) => {
   }
 })
 
+// 회원 승인 (관리자에 의한)
+router.get('/approval', authenticateJWT, requireAdmin, async (req, res) => {
+  const { userid } = req.query;
+
+  if (!userid) {
+    return res.status(400).json({ message: '[ERROR] userid is required' });
+  }
+
+  try {
+    const conn = await mypool.getConnection();
+    const [result] = await conn.query('UPDATE members SET status_cd = ? WHERE userid = ? AND status_cd = ?', ['Y', userid, 'A']);
+    conn.release();
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: '[ERROR] Member not found' });
+    }
+
+    return res.status(204).end(); // 성공. No Content
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: '[ERROR] Approval failed', error: err.message });
+  }
+});
+
+
 module.exports = router
