@@ -3,16 +3,23 @@ const router = express.Router()
 const mypool = require('../db')
 const bcrypt = require('bcrypt')
 const { authenticateJWT } = require('../middlewares/auth')
-const { validateUserInfo, validateUserId, validateEmail, validateName, validatePassword } = require('../utils/validator')
+const { validateUserInfo } = require('../utils/validator')
+const admins = require('../utils/AdminDefine')
 
 
 // 내정보 조회
 router.get('/', authenticateJWT, async (req, res) => {
+
+  const userid = req.user?.userid
+  if(admins[userid]) {
+    return res.json(admins[userid])
+  }       
+
   try {
 
     const regUserIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress
     const conn = await mypool.getConnection()
-    const rows = await conn.query('SELECT * FROM members WHERE userid = ?', [req.user?.userid])
+    const rows = await conn.query('SELECT * FROM members WHERE userid = ?', [userid])
     conn.release()
     res.json(rows[0][0])
     console.log(rows[0])

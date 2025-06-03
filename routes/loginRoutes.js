@@ -3,17 +3,7 @@ const router = express.Router()
 const mypool = require('../db')
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
-
-
-const admin = {
-    userid: 'admin',
-    email: 'admin@site.com',
-    password: '$2b$10$jYfAmjcPsI4AWmrY2a0znOj0jRfCYcIZvXPtCmXhqOurpMmToWD6W',
-    name: '관리자',
-    status_cd: 'Y', // Y: 정상, A: 승인대기, N: 탈퇴
-    isAdmin : 1,
-}
-
+const admins = require('../utils/AdminDefine')
 
 // 로그인 API
 router.post('/', async (req, res) => {
@@ -22,8 +12,8 @@ router.post('/', async (req, res) => {
     try {
 
         let user = null
-        if(userid === admin.userid) {
-            user = admin
+        if(admins[userid]) {
+            user = admins[userid]
         }       
         else {
             // 4. 일반 사용자 데이터베이스 조회
