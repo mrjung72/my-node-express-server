@@ -122,5 +122,30 @@ router.get('/approval', authenticateJWT, requireAdmin, async (req, res) => {
   }
 });
 
+// 회원 패스워드 초기화 (관리자에 의한)
+router.get('/init-password', authenticateJWT, requireAdmin, async (req, res) => {
+  const { userid } = req.query;
+
+  if (!userid) {
+    return res.status(400).json({ message: '[ERROR] userid is required' });
+  }
+
+  try {
+    const conn = await mypool.getConnection();
+    const hashedPassword = await bcrypt.hash(process.env.USER_INIT_PASSWORD, 10)
+    const [result] = await conn.query('UPDATE members SET password = ? WHERE userid = ? AND isAdmin = ?', [hashedPassword, userid, 0]);
+    conn.release();
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: '[ERROR] Member not found' });
+    }
+
+    return res.json({message:process.env.USER_INIT_PASSWORD}); // 성공. No Content
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: '[ERROR] Init password failed', error: err.message });
+  }
+});
+
 
 module.exports = router
