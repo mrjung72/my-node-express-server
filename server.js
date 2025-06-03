@@ -27,7 +27,7 @@ app.use('/api/login', loginRoutes)
 app.use('/api/me', myInfoRoutes)
 app.use('/api/email', emailRoutes)
 app.use('/api/code', codeRoutes)
-app.use('/api/telnet', telnetRoutes)
+app.use('/api/server-check', telnetRoutes)
 
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`)

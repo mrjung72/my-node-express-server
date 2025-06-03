@@ -3,7 +3,8 @@ const net = require('net')
 const express = require('express')
 const router = express.Router()
 
-router.post('/check-telnet', async (req, res) => {
+router.post('/telnet', async (req, res) => {
+
   const { ip, port } = req.body
   if (!ip || !port) return res.status(400).json({ error: 'IP 또는 포트가 누락되었습니다.' })
 
