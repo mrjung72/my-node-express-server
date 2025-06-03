@@ -75,4 +75,20 @@ router.post('/telnet-single', async (req, res) => {
   }
 })
 
+router.post('/async-single', async (req, res) => {
+  const { ip, port } = req.body
+  try {
+    // 예: net.connect 또는 mssql 연결 시도
+    const socket = net.connect({ host: ip, port }, () => {
+      socket.end()
+      res.json({ message: 'Connected' })
+    })
+    socket.on('error', (err) => {
+      res.status(500).json({ message: 'Failed', error: err.message })
+    })
+  } catch (err) {
+    res.status(500).json({ message: 'Error', error: err.message })
+  }
+})
+
 module.exports = router
