@@ -16,6 +16,7 @@ const uploadRoutes = require('./routes/uploadRoutes')
 const loginRoutes = require('./routes/loginRoutes')
 const myInfoRoutes = require('./routes/myInfoRoutes')
 const emailRoutes = require('./routes/emailRoutes')
+const codeRoutes = require('./routes/codeRoutes')
 
 // 📌 라우터 등록
 app.use('/api/members', memberRoutes)
@@ -24,6 +25,7 @@ app.use('/api/upload', uploadRoutes)
 app.use('/api/login', loginRoutes)
 app.use('/api/me', myInfoRoutes)
 app.use('/api/email', emailRoutes)
+app.use('/api/code', codeRoutes)
 
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`)

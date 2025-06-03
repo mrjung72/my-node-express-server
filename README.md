@@ -157,3 +157,35 @@ CREATE TABLE servers_connect_his (
   INDEX ix_servers_connect_his_05 (db_userid)
 );
 
+
+# 공통코드 테이블
+drop table common_codes;
+CREATE TABLE common_codes (
+  group_code varchar(50) NOT NULL,
+  code varchar(50) NOT NULL,
+  label varchar(100) NOT NULL,
+  PRIMARY KEY (group_code, code)
+);
+
+insert into common_codes (group_code, code, label) 
+values
+('CORP_IDS', 'KR','한국'), 
+('CORP_IDS','US','미국'), 
+('CORP_IDS','UK','영국'),
+('PROC_IDS', 'BOXING', '포장'), 
+('PROC_IDS', 'DESIGN', '설계'), 
+('PROC_IDS', 'PRODUCTION', '생산'), 
+('PROC_IDS', 'MOLDING', '금형'), 
+('PROC_IDS', 'PAINTING', '도색'),
+('SERVER_USAGE_TYPE', 'DB','DB'), 
+('SERVER_USAGE_TYPE', 'APP','APP'),
+('SERVER_ENV_TYPE', 'PROD','운영'), 
+('SERVER_ENV_TYPE', 'QAS','실전'), 
+('SERVER_ENV_TYPE', 'DEV','개발'),
+('SERVER_ROLE_TYPE', 'VIP', 'VIP'),
+('SERVER_ROLE_TYPE', 'Active', 'Active'),
+('SERVER_ROLE_TYPE', 'Standby', 'Standby'),
+('SERVER_ROLE_TYPE', 'async', 'Async'),
+('USE_YN', 'Y','사용'), 
+('USE_YN','N','미사용');
+
