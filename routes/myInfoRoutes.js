@@ -3,6 +3,7 @@ const router = express.Router()
 const mypool = require('../db')
 const bcrypt = require('bcrypt')
 const { authenticateJWT } = require('../middlewares/auth')
+const { validateUserInfo, validateUserId, validateEmail, validateName, validatePassword } = require('../utils/validator')
 
 
 // 내정보 조회
@@ -28,12 +29,9 @@ router.put('/', authenticateJWT, async (req, res) => {
   const userid = req.user?.userid
   const regUserIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress
 
-  if (!userid) {
-    return res.status(400).send('[ERROR] User ID is required')
-  } else if (!name) {
-    return res.status(401).send('[ERROR] Name field is required')
-  } else if (!email || !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
-    return res.status(402).send('[ERROR] Invalid email format') 
+  const userInfoValidation = validateUserInfo({email:email, name:name})
+  if (!userInfoValidation.valid) {
+    return res.status(userInfoValidation.code).send(userInfoValidation.message)
   }
 
   try {
@@ -52,22 +50,14 @@ router.put('/', authenticateJWT, async (req, res) => {
 // 회원가입
 router.post('/', async (req, res) => {
 
-  const { name, email, userid, password } = req.body
+  const { userid, email, name, password } = req.body
   const userPcIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress
 
-  if (!userid || !/^[a-zA-Z0-9]+$/.test(userid)) {
-    return res.status(411).send('[ERROR] User ID can only contain alphanumeric characters')
-  } else if (userid.toLowerCase().startsWith('admin')) {
-    return res.status(412).send('[ERROR] User ID that start with "admin" is not allowed')
+  const userInfoValidation = validateUserInfo({userid:userid, email:email, name:name, password:password})
+  if (!userInfoValidation.valid) {
+    return res.status(userInfoValidation.code).send(userInfoValidation.message)
   }
-  else if (!email || !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
-    return res.status(413).send('[ERROR] Invalid email format')
-  } else if (!name) {
-    return res.status(414).send('[ERROR] Name field is required')
-  } else if (!password || password.length < 4) {
-    return res.status(415).send('[ERROR] Password must be at least 4 characters long')
-  }     
-  
+
   try {
     const conn = await mypool.getConnection()
     const hashedpassword = await bcrypt.hash(password, 10)
