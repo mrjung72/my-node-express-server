@@ -4,7 +4,7 @@ const express = require('express')
 const router = express.Router()
 
 
-router.post('/bulk', async (req, res) => {
+router.post('/telnet-bulk', async (req, res) => {
   const targets = req.body // [{ ip, port }]
   if (!Array.isArray(targets)) return res.status(400).json({ error: '형식 오류' })
 
@@ -40,7 +40,7 @@ router.post('/bulk', async (req, res) => {
 })
 
 
-router.post('/single', async (req, res) => {
+router.post('/telnet-single', async (req, res) => {
 
   const { ip, port } = req.body
   if (!ip || !port) return res.status(400).json({ error: 'IP 또는 포트가 누락되었습니다.' })
