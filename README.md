@@ -165,6 +165,8 @@ CREATE TABLE common_codes (
   code varchar(50) NOT NULL,
   label varchar(100) NOT NULL,
   use_yn varchar(1) NOT NULL DEFAULT 'Y',
+  category varchar(50) NULL,
+  attributes varchar(4000) NULL,  -- 속성값 json타입 ex. {속성ID:속성값, ...}
   PRIMARY KEY (group_code, code)
 );
 
