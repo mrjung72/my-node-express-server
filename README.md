@@ -72,7 +72,7 @@ CREATE TABLE servers_temp (
   descryption varchar(2000) DEFAULT NULL,
   reg_pc_ip varchar(20) NULL,   -- 등록자 PC 아이피
   reg_userid varchar(20) NULL,   -- 등록자ID
-  PRIMARY KEY (server_ip, port, db_name)
+  PRIMARY KEY (server_ip, port, corp_id, db_name)
 );
 
 
@@ -173,13 +173,16 @@ values
 ('CORP_IDS', 'KR','한국'), 
 ('CORP_IDS','US','미국'), 
 ('CORP_IDS','UK','영국'),
+('CORP_IDS','PR','프랑스'),
+('CORP_IDS','JP','일본'),
+('CORP_IDS','CN','캐나다'),
 ('PROC_IDS', 'BOXING', '포장'), 
 ('PROC_IDS', 'DESIGN', '설계'), 
 ('PROC_IDS', 'PRODUCTION', '생산'), 
 ('PROC_IDS', 'MOLDING', '금형'), 
 ('PROC_IDS', 'PAINTING', '도색'),
 ('SERVER_USAGE_TYPE', 'DB','DB'), 
-('SERVER_USAGE_TYPE', 'APP','APP'),
+('SERVER_USAGE_TYPE', 'AP','AP'),
 ('SERVER_ENV_TYPE', 'PROD','운영'), 
 ('SERVER_ENV_TYPE', 'QAS','실전'), 
 ('SERVER_ENV_TYPE', 'DEV','개발'),
