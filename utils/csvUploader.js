@@ -3,7 +3,7 @@ const fs = require('fs')
 const iconv = require('iconv-lite')
 const csv = require('csv-parser')
 
-async function uploadCsvFile(filePath, tableName, columns, db, isInitData) {
+async function uploadCsvFile(filePath, tableName, columns, db, isInitData, upperLowerCaseDefine) {
     return new Promise((resolve, reject) => {
         const rows = []
 
@@ -14,10 +14,18 @@ async function uploadCsvFile(filePath, tableName, columns, db, isInitData) {
             }))
             .on('data', (data) => {
 
-                
+
                 // 필요한 컬럼만 추출해서 정렬된 배열로 구성
                 const row = columns.map(col => {
-                    const value = data[col.trim()] // trim()을 사용하여 공백 제거
+                    const trimedColName = col.trim() // trim()을 사용하여 공백 제거
+                    let value = data[trimedColName] 
+                    if(upperLowerCaseDefine[trimedColName]) {
+                        if(upperLowerCaseDefine[trimedColName] === 'UP')
+                            value = data[trimedColName].toUpperCase()
+                        else 
+                            value = data[trimedColName].toLowerCase()
+                    } 
+                        
                     return typeof value === 'string' ? value.trim() : value
                 })
                 

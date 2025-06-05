@@ -68,8 +68,11 @@ router.post('/servers', authenticateJWT, upload.single('file'), async (req, res)
     console.log(`This Csv servers were registered by ${req.user?.userid} on ${regUserIp}`)
     const filePath = req.file.path
     const columns = ['server_ip', 'hostname', 'port', 'corp_id', 'env_type', 'proc_id', 'usage_type', 'role_type', 'check_yn', 'db_name', 'descryption'] // server 테이블 컬럼
+
+    // 대소문자 변환여부 정의 (UP-대문자, LOW-소문자)
+    const UpperLowerCaseDefine = {corp_id:"UP", env_type:"UP", proc_id:"UP", usage_type:"UP", role_type:"UP", check_yn:"UP"}
     try {
-        const result = await uploadCsvFile(filePath, 'servers_temp', columns, mypool, true)
+        const result = await uploadCsvFile(filePath, 'servers_temp', columns, mypool, true, UpperLowerCaseDefine)   
         console.log(result)
         if (result.success) {
             await inputServersData(mypool)
