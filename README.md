@@ -139,22 +139,22 @@ drop table servers_connect_his;
 CREATE TABLE servers_connect_his (
   id int(11) NOT NULL AUTO_INCREMENT,
   user_pc_ip varchar(20) NOT NULL,
-  user_email varchar(255) NOT NULL,
+  userid varchar(20) NOT NULL,
   server_ip varchar(20) NOT NULL,
   port int(4) NOT NULL,
   connect_method varchar(20) NOT NULL,  -- 접속 방식(telnet/db_con)
   db_name varchar(100) DEFAULT NULL,  -- DB명
-  db_userid varchar(100) DEFAULT NULL,  -- DB접속 계정ID
+  db_user varchar(20) DEFAULT NULL,  -- DB접속 계정
   return_code varchar(20) DEFAULT NULL,   -- 결과코드(success/fail)
   return_desc varchar(2000) DEFAULT NULL,   -- 결과메세지
   createdAt timestamp NULL DEFAULT current_timestamp(),
   updatedAt timestamp NULL DEFAULT NULL,
   PRIMARY KEY (id),
   INDEX ix_servers_connect_his_01 (user_pc_ip),
-  INDEX ix_servers_connect_his_02 (user_email),
+  INDEX ix_servers_connect_his_02 (userid),
   INDEX ix_servers_connect_his_03 (server_ip),
   INDEX ix_servers_connect_his_04 (db_name),
-  INDEX ix_servers_connect_his_05 (db_userid)
+  INDEX ix_servers_connect_his_05 (db_user)
 );
 
 
