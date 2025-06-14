@@ -158,6 +158,22 @@ CREATE TABLE servers_connect_his (
 );
 
 
+# 데이터이관 기록
+drop table data_migration_log;
+CREATE TABLE data_migration_log (
+  id int(11) NOT NULL AUTO_INCREMENT,
+  work_id varchar(20) NOT NULL,
+  table_name varchar(50) NOT NULL,
+  data_rows int(8) NOT NULL DEFAULT 0,
+  result_desc varchar(2000) DEFAULT NULL,   -- 결과메세지
+  createdAt timestamp NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (id),
+  INDEX ix_servers_connect_his_01 (work_id),
+  INDEX ix_servers_connect_his_02 (table_name)
+);
+
+
+
 # 공통코드 테이블
 drop table common_codes;
 CREATE TABLE common_codes (
