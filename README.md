@@ -62,7 +62,7 @@ CREATE TABLE servers_temp (
   server_ip varchar(20) NOT NULL,
   hostname varchar(100) DEFAULT NULL,
   port int(4) NOT NULL,
-  title varchar(100) DEFAULT NULL,   -- 제목
+  proc_detail varchar(100) DEFAULT NULL,   -- 공정 상세
   corp_id varchar(20) DEFAULT NULL,  -- 법인ID
   env_type varchar(10) NOT NULL,   -- 환경구분 (prod/qas/dev)
   proc_id varchar(20) DEFAULT NULL,   -- 공정ID
@@ -101,8 +101,8 @@ CREATE TABLE servers_port (
   server_port_id int(11) NOT NULL AUTO_INCREMENT,
   server_ip varchar(20) NOT NULL,
   port int(4) NOT NULL,
-  title varchar(100) DEFAULT NULL,   -- 제목
   proc_id varchar(20) DEFAULT NULL,   -- 공정ID
+  proc_detail varchar(100) DEFAULT NULL,   -- 공정 상세
   usage_type varchar(20) NOT NULL,   -- 용도분류 (DB/WEB/WAS/APP/...)
   stat_cd varchar(1) DEFAULT 'Y',    -- 상태코드(Y-사용,N-미사용)
   stat_check_target_yn varchar(1) DEFAULT 'Y',    -- 상태 체크 대상여부(Y/N)
