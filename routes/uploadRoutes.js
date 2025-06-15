@@ -72,7 +72,7 @@ router.post('/servers', authenticateJWT, upload.single('file'), async (req, res)
     // 대소문자 변환여부 정의 (UP-대문자, LOW-소문자)
     const UpperLowerCaseDefine = {corp_id:"UP", env_type:"UP", proc_id:"UP", usage_type:"UP", role_type:"UP", check_yn:"UP"}
     try {
-        const result = await uploadCsvFile(filePath, 'servers_temp', columns, mypool, true, UpperLowerCaseDefine)   
+        const result = await uploadCsvFile(filePath, 'servers_temp', columns, mypool, true, UpperLowerCaseDefine, ['db_name'])   
         console.log(result)
         if (result.success) {
             await inputServersData(mypool)
