@@ -17,9 +17,10 @@ async function inputServersData(db) {
                 GROUP  BY SERVER_IP`;
         await db.execute(sql);
         
-        await db.execute(`insert into servers_port (server_ip, port, proc_id, usage_type, stat_check_target_yn)
+        await db.execute(`insert into servers_port (server_ip, port, title, proc_id, usage_type, stat_check_target_yn)
                             select server_ip
                                 , port
+                                , max(title) title
                                 , max(proc_id)
                                 , max(usage_type)
                                 , max(check_yn)

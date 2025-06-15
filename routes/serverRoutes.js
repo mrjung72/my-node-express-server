@@ -30,6 +30,7 @@ router.get('/', authenticateJWT, async (req, res) => {
               , m.role_type 
               , m.status_cd 
               , d.port
+              , d.title
               , d.stat_check_target_yn 
             FROM servers m, servers_port d 
             WHERE m.server_ip  = d.server_ip 
