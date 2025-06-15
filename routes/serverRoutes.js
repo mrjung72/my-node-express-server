@@ -40,6 +40,27 @@ router.get('/', authenticateJWT, async (req, res) => {
   res.json(rows[0])
 })
 
+// DB 인스턴스 목록 조회
+router.get('/db', authenticateJWT, async (req, res) => {
+  const conn = await mypool.getConnection()
+  const query = `
+            SELECT d.db_instance_name
+              , S.corp_id 
+              , p.proc_id 
+              , P.server_ip 
+              , P.port 
+              , S.env_type 
+              , S.role_type 
+            FROM database_instances D, servers_port P, servers s 
+            WHERE D.server_port_id = P.server_port_id 
+            AND P.server_ip = S.server_ip 
+            ORDER BY p.server_ip, p.proc_id
+            `
+  const rows = await conn.query(query)
+  conn.release()
+  res.json(rows[0])
+})
+
 // 개별 서버 상태 확인
 router.get('/status/:id', authenticateJWT, async (req, res) => {
   const { id } = req.params
