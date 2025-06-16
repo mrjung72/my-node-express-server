@@ -10,7 +10,7 @@ router.get('/:groupCode', async (req, res) => {
 
     try {
         const conn = await mypool.getConnection()
-        const [rows] = await conn.query('SELECT code, label FROM common_codes WHERE group_code = ?', [groupCode])
+        const [rows] = await conn.query('SELECT code, label FROM common_codes WHERE group_code = ? order by label ', [groupCode])
         conn.release()
         res.json(rows)
     } catch (err) {
