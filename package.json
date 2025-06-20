@@ -23,6 +23,7 @@
     "mysql2": "^3.14.1",
     "nodemailer": "^7.0.3",
     "papaparse": "^5.5.3",
+    "pg": "^8.16.2",
     "tcp-ping": "^0.1.1"
   },
   "devDependencies": {
