@@ -2,9 +2,11 @@ const fs = require('fs')
 const iconv = require('iconv-lite')
 const csv = require('csv-parser')
 
-async function uploadCsvFile(filePath, tableName, columns, db, isInitData, upperLowerCaseDefine = {}, splitRowByLineBreakColumns = []) {
+async function uploadCsvFile(filePath, tableName, columns, db, isInitData, upperLowerCaseDefine = {}, splitRowByLineBreakColumns = [], columns_save_last_value = []) {
     return new Promise((resolve, reject) => {
         const rows = []
+        let mapLastValueByColumn = {}
+        let countColumnExistValue = 0
 
         fs.createReadStream(filePath)
             .pipe(iconv.decodeStream('euc-kr'))
@@ -17,6 +19,11 @@ async function uploadCsvFile(filePath, tableName, columns, db, isInitData, upper
                     const trimmedCol = col.trim()
                     let value = data[trimmedCol]
 
+                    // 값이 존재하는 컬럼수를 계산한다.
+                    if(value !== undefined && value.trim() !== '') {
+                        countColumnExistValue += 1
+                    }
+
                     if (upperLowerCaseDefine[trimmedCol]) {
                         if (upperLowerCaseDefine[trimmedCol] === 'UP')
                             value = typeof value === 'string' ? value.toUpperCase() : value
@@ -24,6 +31,14 @@ async function uploadCsvFile(filePath, tableName, columns, db, isInitData, upper
                             value = typeof value === 'string' ? value.toLowerCase() : value
                     }
 
+                    // 값 저장 대상 컬럼 이면서 값이 존재하면, 현재 값을 저장하고 아니면 최근 값을 대입한다.
+                    if(columns_save_last_value.indexOf(trimmedCol) >= 0) {
+                        if( value === undefined || value.trim() === '')
+                            value = mapLastValueByColumn[trimmedCol]
+                        else
+                            mapLastValueByColumn[trimmedCol] = value 
+                    }
+                    
                     return typeof value === 'string' ? value.trim() : value
                 })
 
@@ -60,11 +75,15 @@ async function uploadCsvFile(filePath, tableName, columns, db, isInitData, upper
                     }
                 } else {
                     // 줄바꿈 처리 필요 없으면 그대로 push
-                    if (baseRow.length > 0 && baseRow[0] != null && baseRow[0] !== '') {
+                    if (countColumnExistValue > 0 && baseRow.length > 0 && baseRow[0] != null && baseRow[0] !== '') {
                         const cleanedValues = baseRow.map(value => value === undefined ? null : value)
                         rows.push(cleanedValues)
+                    } else if(countColumnExistValue === 0) {
+                        console.log('공백 ....');
                     }
                 }
+                countColumnExistValue = 0 
+
             })
             .on('end', async () => {
                 if (rows.length === 0) return resolve({ success: false, message: 'No data' })

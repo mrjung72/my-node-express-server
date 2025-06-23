@@ -75,7 +75,7 @@ router.post('/servers', authenticateJWT, upload.single('file'), async (req, res)
     // 대소문자 변환여부 정의 (UP-대문자, LOW-소문자)
     const UpperLowerCaseDefine = {corp_id:"UP", env_type:"UP", usage_type:"UP", role_type:"UP", category_code:"UP"}
     try {
-        const result = await uploadCsvFile(filePath, 'servers_temp', columns, mypool, true, UpperLowerCaseDefine, ['db_name'])   
+        const result = await uploadCsvFile(filePath, 'servers_temp', columns, mypool, true, UpperLowerCaseDefine, ['port', 'db_name'], columns_save_last_value)   
         if (result.success) {
             await inputServersData(mypool)
             const sql_his = 'INSERT INTO csv_upload_his (userid, user_pc_ip, upload_type, upload_data_cnt) VALUES (?, ?, ?, ?)'

@@ -78,7 +78,7 @@ CREATE TABLE servers_temp (
   check_yn varchar(1) DEFAULT 'Y',    -- 상태 체크 대상여부(Y/N)
   reg_pc_ip varchar(20) NULL,   -- 등록자 PC 아이피
   reg_userid varchar(20) NULL,   -- 등록자ID
-  PRIMARY KEY (server_ip, port, corp_id, group_id, db_name)
+  PRIMARY KEY (server_ip, port, corp_id, group_id, proc_id)
 );
 
 
