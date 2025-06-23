@@ -61,21 +61,24 @@ CREATE TABLE csv_upload_his (
 # servers_temp 테이블 정의
 drop table servers_temp;
 CREATE TABLE servers_temp (
+  env_type varchar(10) NOT NULL,   -- 환경구분 (prod/qas/dev)
+  corp_id varchar(20) DEFAULT NULL,  -- 법인ID
+  group_id varchar(20) DEFAULT NULL,  -- 그룹ID
+  proc_detail varchar(100) DEFAULT NULL,   -- 공정 상세
+  proc_id varchar(20) DEFAULT NULL,   -- 공정ID
+  usage_type varchar(20) NOT NULL,   -- 용도분류 (DB/WEB/WAS/APP/...)
   server_ip varchar(20) NOT NULL,
   hostname varchar(100) DEFAULT NULL,
   port int(4) NOT NULL,
-  proc_detail varchar(100) DEFAULT NULL,   -- 공정 상세
-  corp_id varchar(20) DEFAULT NULL,  -- 법인ID
-  env_type varchar(10) NOT NULL,   -- 환경구분 (prod/qas/dev)
-  proc_id varchar(20) DEFAULT NULL,   -- 공정ID
-  usage_type varchar(20) NOT NULL,   -- 용도분류 (DB/WEB/WAS/APP/...)
   role_type varchar(20) DEFAULT NULL,   -- 역할구분 (vip/active/standby/async)
-  check_yn varchar(1) DEFAULT 'Y',    -- 상태 체크 대상여부(Y/N)
-  db_name varchar(100) DEFAULT NULL,
+  category_code varchar(20) DEFAULT NULL,   -- 분류코드 (EIF/UI)
   descryption varchar(2000) DEFAULT NULL,
+  db_name varchar(100) DEFAULT NULL,
+  db_type varchar(10) DEFAULT NULL,    -- DB구분(IF, )
+  check_yn varchar(1) DEFAULT 'Y',    -- 상태 체크 대상여부(Y/N)
   reg_pc_ip varchar(20) NULL,   -- 등록자 PC 아이피
   reg_userid varchar(20) NULL,   -- 등록자ID
-  PRIMARY KEY (server_ip, port, corp_id, db_name)
+  PRIMARY KEY (server_ip, port, corp_id, group_id, db_name)
 );
 
 

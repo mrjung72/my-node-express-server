@@ -67,10 +67,13 @@ router.post('/servers', authenticateJWT, upload.single('file'), async (req, res)
     const regUserIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress
     console.log(`This Csv servers were registered by ${req.user?.userid} on ${regUserIp}`)
     const filePath = req.file.path
-    const columns = ['env_type', 'corp_id', 'proc_detail', 'proc_id', 'usage_type', 'server_ip', 'hostname', 'port', 'role_type', 'descryption', 'db_name'] // server 테이블 컬럼
+    const columns = ['env_type', 'corp_id', 'group_id', 'proc_detail', 'proc_id', 'usage_type', 'server_ip', 'hostname', 'port', 'role_type', 'category_code', 'descryption', 'db_name', 'db_type'] 
+    
+    // 최근의 값을 저장하는 컬럼정의
+    const columns_save_last_value = ['env_type', 'corp_id', 'group_id', 'proc_detail', 'proc_id', 'usage_type', 'server_ip', 'hostname', 'port'] 
 
     // 대소문자 변환여부 정의 (UP-대문자, LOW-소문자)
-    const UpperLowerCaseDefine = {corp_id:"UP", env_type:"UP", usage_type:"UP", role_type:"UP"}
+    const UpperLowerCaseDefine = {corp_id:"UP", env_type:"UP", usage_type:"UP", role_type:"UP", category_code:"UP"}
     try {
         const result = await uploadCsvFile(filePath, 'servers_temp', columns, mypool, true, UpperLowerCaseDefine, ['db_name'])   
         if (result.success) {
