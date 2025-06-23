@@ -7,6 +7,8 @@ async function uploadCsvFile(filePath, tableName, columns, db, isInitData, upper
         const rows = []
         let mapLastValueByColumn = {}
         let countColumnExistValue = 0
+        let ipValueValidation = false
+        let error_msg
 
         fs.createReadStream(filePath)
             .pipe(iconv.decodeStream('euc-kr'))
@@ -22,7 +24,15 @@ async function uploadCsvFile(filePath, tableName, columns, db, isInitData, upper
                     // 값이 존재하는 컬럼수를 계산한다.
                     if(value !== undefined && value.trim() !== '') {
                         countColumnExistValue += 1
+
+                        // 서버 아이피 값 형식을 검증한다.
+                        if(trimmedCol === 'server_ip') {
+                            const ipRegex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/
+                            ipValueValidation = ipRegex.test(value)
+                            error_msg = `${value} is not valid ip format`
+                        }
                     }
+
 
                     if (upperLowerCaseDefine[trimmedCol]) {
                         if (upperLowerCaseDefine[trimmedCol] === 'UP')
@@ -38,7 +48,7 @@ async function uploadCsvFile(filePath, tableName, columns, db, isInitData, upper
                         else
                             mapLastValueByColumn[trimmedCol] = value 
                     }
-                    
+
                     return typeof value === 'string' ? value.trim() : value
                 })
 
@@ -75,11 +85,13 @@ async function uploadCsvFile(filePath, tableName, columns, db, isInitData, upper
                     }
                 } else {
                     // 줄바꿈 처리 필요 없으면 그대로 push
-                    if (countColumnExistValue > 0 && baseRow.length > 0 && baseRow[0] != null && baseRow[0] !== '') {
+                    if (countColumnExistValue > 0 && ipValueValidation && baseRow.length > 0 && baseRow[0] != null && baseRow[0] !== '') {
                         const cleanedValues = baseRow.map(value => value === undefined ? null : value)
                         rows.push(cleanedValues)
                     } else if(countColumnExistValue === 0) {
                         console.log('공백 ....');
+                    } else if(!ipValueValidation) {
+                        console.log(error_msg)
                     }
                 }
                 countColumnExistValue = 0 
