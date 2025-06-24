@@ -28,14 +28,24 @@ async function inputServersData(db) {
                             group by server_ip, port`);
         
         await db.execute(`insert into database_instances (db_instance_name, db_instance_type, server_port_id)
-                            select db_name, 
-                                case when db_type = '' or DB_TYPE is null then 'MAIN' else DB_TYPE end DB_TYPE
-                                ,(select p.server_port_id  from servers_port p where p.server_ip = st.server_ip and p.port = st.port) server_port_id
-                            from servers_temp st 
-                            where st.usage_type = 'AP'
-                            and group_id > 0
-                            and length(trim(db_name)) > 3
-                            `);
+                            select ap.db_name,
+                                case when ap.db_type is null or ap.db_type = '' then 'MAIN' else  ap.db_type end db_type,
+                                (select sp.server_port_id from servers_port sp where sp.server_ip = db.server_ip and sp.port = db.port ) server_port_id
+                            from (
+                                select corp_id , group_id , db_name , db_type , env_type
+                                from servers_temp st
+                                where usage_type = 'AP'
+                                and group_id > 0
+                                and LENGTH(trim(db_name)) > 3
+                            ) ap, (
+                                select env_type , corp_id , group_id , server_ip , port
+                                from servers_temp st
+                                where usage_type = 'DB'
+                            ) db
+                            where ap.env_type = db.env_type
+                            and ap.corp_id = db.corp_id
+                            and ap.group_id = db.group_id
+                        `);
 
         await db.execute(`SET FOREIGN_KEY_CHECKS = 1`);
         
