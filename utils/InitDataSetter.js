@@ -4,18 +4,30 @@ async function inputServersData(db) {
         await db.execute(`TRUNCATE TABLE database_instances`);
         await db.execute(`TRUNCATE TABLE servers_port`);
         await db.execute(`TRUNCATE TABLE servers`);
+        await db.execute(`TRUNCATE TABLE corp_proc_define`);
 
-        const sql = 
-                `INSERT INTO SERVERS (SERVER_IP, HOSTNAME, CORP_ID, ENV_TYPE, ROLE_TYPE, STATUS_CD)
-                SELECT SERVER_IP
-                    ,MAX(HOSTNAME) HOSTNAME
-                    ,MAX(CORP_ID) CORP_ID
-                    ,MAX(ENV_TYPE) ENV_TYPE
-                    ,MAX(ROLE_TYPE) ROLE_TYPE
-                    ,'Y'
-                FROM SERVERS_TEMP
-                GROUP  BY SERVER_IP`;
-        await db.execute(sql);
+        await db.execute(`insert into corp_proc_define (env_type, corp_id, proc_name, proc_type, db_instance_name, db_instance_name_etc, db_instance_cnt)
+                            select env_type, corp_id, proc_detail, proc_id
+                                    , max(db_name) db_name
+                                    , case when min(db_name) = max(db_name) then '' else min(db_name) end db_name_etc
+                                    , count(*) db_cnt
+                            from servers_temp st 
+                            where length(trim(db_name)) > 3
+                            and usage_type = 'AP'
+                            and db_type != 'IF'
+                            group by env_type, corp_id, proc_detail, proc_id
+                        `);
+
+        await db.execute(`INSERT INTO SERVERS (SERVER_IP, HOSTNAME, CORP_ID, ENV_TYPE, ROLE_TYPE, STATUS_CD)
+                            SELECT SERVER_IP
+                                ,MAX(HOSTNAME) HOSTNAME
+                                ,MAX(CORP_ID) CORP_ID
+                                ,MAX(ENV_TYPE) ENV_TYPE
+                                ,MAX(ROLE_TYPE) ROLE_TYPE
+                                ,'Y'
+                            FROM SERVERS_TEMP
+                            GROUP  BY SERVER_IP
+                        `);
         
         await db.execute(`insert into servers_port (server_ip, port, proc_id, proc_detail, usage_type, stat_check_target_yn)
                             select server_ip

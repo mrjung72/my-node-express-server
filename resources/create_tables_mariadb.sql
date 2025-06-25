@@ -82,6 +82,26 @@ CREATE TABLE servers_temp (
 );
 
 
+# 법인별/공정 테이블 정의
+drop table corp_proc_define;
+CREATE TABLE corp_proc_define (
+  corp_proc_id int(11) NOT NULL AUTO_INCREMENT,
+  env_type varchar(10) NOT NULL,   -- 환경구분 (prod/qas/dev)
+  corp_id varchar(20) DEFAULT NULL,  -- 법인ID
+  proc_type varchar(20) DEFAULT NULL,   -- 공정타입
+  proc_name varchar(100) DEFAULT NULL,   -- 공정명
+  db_instance_name varchar(100) NOT NULL,
+  db_instance_name_etc varchar(1000) NOT NULL,
+  db_instance_cnt int(4) NOT NULL,
+  createdAt timestamp DEFAULT current_timestamp(),
+  closedAt timestamp NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (corp_proc_id),
+  UNIQUE KEY uk_corp_proc_define_01 (env_type, corp_id, proc_type, proc_name),
+  INDEX ix_corp_proc_define_01 (proc_name),
+  INDEX ix_corp_proc_define_02 (corp_id, proc_name),
+  INDEX ix_corp_proc_define_03 (db_instance_name)
+);
+
 
 # servers 테이블 정의
 drop table servers;
@@ -98,7 +118,6 @@ CREATE TABLE servers (
   PRIMARY KEY (server_ip),
   INDEX ix_servers_01 (corp_id, env_type, role_type)
 );
-
 
 # servers_port 테이블 정의
 drop table servers_port;
