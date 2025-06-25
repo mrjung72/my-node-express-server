@@ -14,7 +14,7 @@ const upload = multer({ dest: 'uploads/board/' });
 // 게시글 목록
 router.get('/', async (req, res) => {
     const conn = await mypool.getConnection();
-    const [rows] = await conn.query('SELECT * FROM boards ');
+    const [rows] = await conn.query('SELECT * FROM boards order by board_id desc ');
     conn.release();
     
   res.json(rows);
@@ -70,6 +70,74 @@ router.get('/download/:board_id', async (req, res) => {
   }
   res.setHeader('Content-Disposition', disposition);
   res.sendFile(filePath);
+});
+
+// 게시글 상세조회
+router.get('/:id', async (req, res) => {
+  const { id } = req.params;
+  const conn = await mypool.getConnection();
+  const [rows] = await conn.query('SELECT * FROM boards WHERE board_id = ?', [id]);
+  conn.release();
+  if (!rows.length) return res.status(404).json({ message: '게시글이 없습니다.' });
+  res.json(rows[0]);
+});
+
+// 게시글 수정
+router.put('/:id', authenticateJWT, upload.single('file'), async (req, res) => {
+  const { id } = req.params;
+  const { title, content } = req.body;
+  const userid = req.user?.userid;
+  if (!title || !content) return res.status(400).json({ message: '필수 항목 누락' });
+  const conn = await mypool.getConnection();
+  const [rows] = await conn.query('SELECT * FROM boards WHERE board_id = ?', [id]);
+  if (!rows.length) {
+    conn.release();
+    return res.status(404).json({ message: '게시글이 없습니다.' });
+  }
+  const post = rows[0];
+  if (post.userid !== userid) {
+    conn.release();
+    return res.status(403).json({ message: '수정 권한이 없습니다.' });
+  }
+  // 파일 교체 시 기존 파일 삭제
+  let filepath = post.filepath;
+  let originalname = post.originalname;
+  if (req.file) {
+    if (filepath) {
+      const oldPath = path.join(uploadDir, filepath);
+      if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+    }
+    filepath = req.file.filename;
+    originalname = req.file.originalname;
+  }
+  await conn.query('UPDATE boards SET title=?, content=?, filepath=?, originalname=? WHERE board_id=?', [title, content, filepath, originalname, id]);
+  conn.release();
+  res.json({ message: '수정되었습니다.' });
+});
+
+// 게시글 삭제
+router.delete('/:id', authenticateJWT, async (req, res) => {
+  const { id } = req.params;
+  const userid = req.user?.userid;
+  const conn = await mypool.getConnection();
+  const [rows] = await conn.query('SELECT * FROM boards WHERE board_id = ?', [id]);
+  if (!rows.length) {
+    conn.release();
+    return res.status(404).json({ message: '게시글이 없습니다.' });
+  }
+  const post = rows[0];
+  if (post.userid !== userid) {
+    conn.release();
+    return res.status(403).json({ message: '삭제 권한이 없습니다.' });
+  }
+  // 파일 삭제
+  if (post.filepath) {
+    const filePath = path.join(uploadDir, post.filepath);
+    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+  }
+  await conn.query('DELETE FROM boards WHERE board_id = ?', [id]);
+  conn.release();
+  res.json({ message: '삭제되었습니다.' });
 });
 
 module.exports = router;
