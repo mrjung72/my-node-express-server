@@ -29,11 +29,6 @@ router.post('/', authenticateJWT, upload.single('file'), async (req, res) => {
   }
   const userid = req.user?.userid // 인증 미들웨어에서 세팅
 
-  console.log(upload);
-
-  console.log(req.file);
-
-
   try {
     const conn = await mypool.getConnection()
     const sql = 'INSERT INTO boards (title, content, userid, filepath) VALUES (?, ?, ?, ?)'
@@ -48,17 +43,20 @@ router.post('/', authenticateJWT, upload.single('file'), async (req, res) => {
 
 // 파일 다운로드 (한글 파일명 지원)
 router.get('/download/:board_id', async (req, res) => {
-
+  const { board_id } = req.params;
   const conn = await mypool.getConnection();
-  const rows = await conn.query('SELECT * FROM boards WHERE board_id = ?', [board_id]);
+  const [rows] = await conn.query('SELECT * FROM boards WHERE board_id = ?', [board_id]);
   conn.release();
 
   if (!rows.length) return res.status(404).send('File not found');
 
   const post = rows[0];
-  const filePath = path.join(upload.disposition, post.filePath);
+  if (!post.filepath) return res.status(404).send('No file attached');
 
-  let originalName = post.originalname || filename;
+  // 실제 파일 경로
+  const filePath = path.join(__dirname, '../uploads/board', post.filepath);
+
+  let originalName = post.originalname || post.filepath;
 
   // 브라우저별 한글 파일명 처리
   const userAgent = req.headers['user-agent'] || '';
