@@ -110,7 +110,7 @@ router.put('/:id', authenticateJWT, upload.single('file'), async (req, res) => {
     filepath = req.file.filename;
     originalname = req.file.originalname;
   }
-  await conn.query('UPDATE boards SET title=?, content=?, filepath=?, originalname=? WHERE board_id=?', [title, content, filepath, originalname, id]);
+  await conn.query('UPDATE boards SET title=?, content=?, filepath=? WHERE board_id=?', [title, content, filepath, id]);
   conn.release();
   res.json({ message: '수정되었습니다.' });
 });
