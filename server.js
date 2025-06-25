@@ -18,6 +18,7 @@ const myInfoRoutes = require('./routes/myInfoRoutes')
 const emailRoutes = require('./routes/emailRoutes')
 const codeRoutes = require('./routes/codeRoutes')
 const telnetRoutes = require('./routes/telnetRoutes')
+const boardRoutes = require('./routes/boardRoutes')
 
 // 📌 라우터 등록
 app.use('/api/members', memberRoutes)
@@ -28,6 +29,8 @@ app.use('/api/me', myInfoRoutes)
 app.use('/api/email', emailRoutes)
 app.use('/api/code', codeRoutes)
 app.use('/api/server-check', telnetRoutes)
+app.use('/uploads', express.static('uploads'))
+app.use('/api/board', boardRoutes)
 
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`)

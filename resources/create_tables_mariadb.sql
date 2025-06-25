@@ -160,6 +160,19 @@ CREATE TABLE database_instances (
 
 
 
+# 게시판 테이블
+drop table boards;
+CREATE TABLE boards (
+  board_id int(11) NOT NULL AUTO_INCREMENT,
+  title varchar(100) NOT NULL,
+  content varchar(4000) NOT NULL,
+  filepath varchar(400) NULL, 
+  createdAt timestamp DEFAULT current_timestamp(),
+  PRIMARY KEY (board_id),
+  INDEX ix_boards_01 (title)
+);
+
+
 # 공통코드 테이블
 drop table common_codes;
 CREATE TABLE common_codes (
