@@ -4,52 +4,24 @@ const path = require('path');
 const mypool = require('../db')
 const fs = require('fs');
 const jwt = require('jsonwebtoken');
+const iconv = require('iconv-lite');
+const { authenticateJWT, requireAdmin } = require('../middlewares/auth')
 
 const router = express.Router();
 
-// 업로드 폴더 생성
-const uploadDir = path.join(__dirname, '../uploads/boards');
-if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
-
-// 파일 업로드 설정
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadDir),
-  filename: (req, file, cb) => {
-    const unique = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    cb(null, unique + '-' + file.originalname);
-  }
-});
-const upload = multer({ storage });
-
-
-// 인증 미들웨어
-function authMiddleware(req, res, next) {
-  const auth = req.headers.authorization;
-  if (!auth) return res.status(401).json({ message: 'No token' });
-  const token = auth.replace('Bearer ', '');
-  try {
-    req.user = jwt.verify(token, process.env.JWT_SECRET || 'your_jwt_secret');
-    next();
-  } catch (e) {
-    return res.status(401).json({ message: 'Invalid token' });
-  }
-}
+const upload = multer({ dest: 'uploads/board/' });
 
 // 게시글 목록
 router.get('/', async (req, res) => {
-
-    const conn = await mypool.getConnection()
-    const rows = await conn.query('SELECT * FROM boards ')
-    conn.release()
+    const conn = await mypool.getConnection();
+    const [rows] = await conn.query('SELECT * FROM boards ');
+    conn.release();
     
-  res.json(rows.map(post => ({
-    ...post,
-    fileUrl: post.file ? `${post.file}` : null
-  })));
+  res.json(rows);
 });
 
 // 게시글 등록 (파일 첨부 가능, 인증 필요)
-router.post('/', authMiddleware, upload.single('file'), async (req, res) => {
+router.post('/', authenticateJWT, upload.single('file'), async (req, res) => {
 
   const { title, content } = req.body;
   if (!title || !content) {
@@ -58,6 +30,8 @@ router.post('/', authMiddleware, upload.single('file'), async (req, res) => {
   const userid = req.user?.userid // 인증 미들웨어에서 세팅
 
   console.log(upload);
+
+  console.log(req.file);
 
 
   try {
@@ -70,6 +44,32 @@ router.post('/', authMiddleware, upload.single('file'), async (req, res) => {
     console.error(err)
     res.status(500).send('[ERROR] ' + err.message)
   }
+});
+
+// 파일 다운로드 (한글 파일명 지원)
+router.get('/download/:board_id', async (req, res) => {
+
+  const conn = await mypool.getConnection();
+  const rows = await conn.query('SELECT * FROM boards WHERE board_id = ?', [board_id]);
+  conn.release();
+
+  if (!rows.length) return res.status(404).send('File not found');
+
+  const post = rows[0];
+  const filePath = path.join(upload.disposition, post.filePath);
+
+  let originalName = post.originalname || filename;
+
+  // 브라우저별 한글 파일명 처리
+  const userAgent = req.headers['user-agent'] || '';
+  let encodedName = encodeURIComponent(originalName);
+  let disposition = `attachment; filename*=UTF-8''${encodedName}`;
+  if (/MSIE|Trident/.test(userAgent)) {
+    // IE
+    disposition = 'attachment; filename=' + iconv.encode(originalName, 'euc-kr').toString('binary');
+  }
+  res.setHeader('Content-Disposition', disposition);
+  res.sendFile(filePath);
 });
 
 module.exports = router;
