@@ -31,7 +31,7 @@ router.post('/', authenticateJWT, upload.single('file'), async (req, res) => {
 
   try {
     const conn = await mypool.getConnection()
-    const sql = 'INSERT INTO boards (title, content, userid, filepath) VALUES (?, ?, ?, ?)'
+    const sql = 'INSERT INTO boards (title, content, userid, filename) VALUES (?, ?, ?, ?)'
     const [result] = await conn.query(sql, [title, content, userid, req.file ? req.file.filename : null])
     conn.release()
     res.status(201).json({ userid, title })
@@ -43,6 +43,7 @@ router.post('/', authenticateJWT, upload.single('file'), async (req, res) => {
 
 // 파일 다운로드 (한글 파일명 지원)
 router.get('/download/:board_id', async (req, res) => {
+
   const { board_id } = req.params;
   const conn = await mypool.getConnection();
   const [rows] = await conn.query('SELECT * FROM boards WHERE board_id = ?', [board_id]);
@@ -51,23 +52,23 @@ router.get('/download/:board_id', async (req, res) => {
   if (!rows.length) return res.status(404).send('File not found');
 
   const post = rows[0];
-  if (!post.filepath) return res.status(404).send('No file attached');
+  if (!post.filename) return res.status(404).send('No file attached');
 
   // 실제 파일 경로
-  const filePath = path.join(__dirname, '../uploads/board', post.filepath);
+  const filename = path.join(__dirname, '../uploads/board', post.filename);
 
-  let originalName = post.originalname || post.filepath;
+  let origin_filename = post.origin_filename || post.filename;
 
   // 브라우저별 한글 파일명 처리
   const userAgent = req.headers['user-agent'] || '';
-  let encodedName = encodeURIComponent(originalName);
+  let encodedName = encodeURIComponent(origin_filename);
   let disposition = `attachment; filename*=UTF-8''${encodedName}`;
   if (/MSIE|Trident/.test(userAgent)) {
     // IE
-    disposition = 'attachment; filename=' + iconv.encode(originalName, 'euc-kr').toString('binary');
+    disposition = 'attachment; filename=' + iconv.encode(origin_filename, 'euc-kr').toString('binary');
   }
   res.setHeader('Content-Disposition', disposition);
-  res.sendFile(filePath);
+  res.sendFile(filename);
 });
 
 // 게시글 상세조회
@@ -82,10 +83,12 @@ router.get('/:id', async (req, res) => {
 
 // 게시글 수정
 router.put('/:id', authenticateJWT, upload.single('file'), async (req, res) => {
+
   const { id } = req.params;
   const { title, content } = req.body;
   const userid = req.user?.userid;
   if (!title || !content) return res.status(400).json({ message: '필수 항목 누락' });
+
   const conn = await mypool.getConnection();
   const [rows] = await conn.query('SELECT * FROM boards WHERE board_id = ?', [id]);
   if (!rows.length) {
@@ -97,18 +100,19 @@ router.put('/:id', authenticateJWT, upload.single('file'), async (req, res) => {
     conn.release();
     return res.status(403).json({ message: '수정 권한이 없습니다.' });
   }
+
   // 파일 교체 시 기존 파일 삭제
-  let filepath = post.filepath;
-  let originalname = post.originalname;
+  let filename = post.filename;
+  let origin_filename = post.origin_filename;
   if (req.file) {
-    if (filepath) {
-      const oldPath = path.join(uploadDir, filepath);
+    if (filename) {
+      const oldPath = path.join(uploadDir, filename);
       if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
     }
-    filepath = req.file.filename;
-    originalname = req.file.originalname;
+    filename = req.file.filename;
+    origin_filename = req.file.origin_filename;
   }
-  await conn.query('UPDATE boards SET title=?, content=?, filepath=? WHERE board_id=?', [title, content, filepath, id]);
+  await conn.query('UPDATE boards SET title=?, content=?, filename=?, origin_filename=? WHERE board_id=?', [title, content, filename, origin_filename, id]);
   conn.release();
   res.json({ message: '수정되었습니다.' });
 });
@@ -129,9 +133,9 @@ router.delete('/:id', authenticateJWT, async (req, res) => {
     return res.status(403).json({ message: '삭제 권한이 없습니다.' });
   }
   // 파일 삭제
-  if (post.filepath) {
-    const filePath = path.join(uploadDir, post.filepath);
-    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+  if (post.filename) {
+    const filename = path.join(uploadDir, post.filename);
+    if (fs.existsSync(filename)) fs.unlinkSync(filename);
   }
   await conn.query('DELETE FROM boards WHERE board_id = ?', [id]);
   conn.release();

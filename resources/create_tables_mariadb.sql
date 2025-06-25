@@ -167,7 +167,8 @@ CREATE TABLE boards (
   title varchar(100) NOT NULL,
   content varchar(4000) NOT NULL,
   userid varchar(20) NOT NULL,
-  filepath varchar(400) NULL, 
+  filename varchar(400) NULL, 
+  origin_filename varchar(400) NULL, 
   createdAt timestamp DEFAULT current_timestamp(),
   PRIMARY KEY (board_id),
   INDEX ix_boards_01 (title)
