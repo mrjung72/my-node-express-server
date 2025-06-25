@@ -9,7 +9,8 @@ const { authenticateJWT, requireAdmin } = require('../middlewares/auth')
 
 const router = express.Router();
 
-const upload = multer({ dest: 'uploads/board/' });
+const uploadDir = path.join(__dirname, '../uploads/board');
+const upload = multer({ dest: uploadDir });
 
 // 게시글 목록
 router.get('/', async (req, res) => {
@@ -22,7 +23,6 @@ router.get('/', async (req, res) => {
 
 // 게시글 등록 (파일 첨부 가능, 인증 필요)
 router.post('/', authenticateJWT, upload.single('file'), async (req, res) => {
-
   const { title, content } = req.body;
   if (!title || !content) {
     return res.status(400).json({ message: '필수 항목 누락' });
@@ -31,8 +31,8 @@ router.post('/', authenticateJWT, upload.single('file'), async (req, res) => {
 
   try {
     const conn = await mypool.getConnection()
-    const sql = 'INSERT INTO boards (title, content, userid, filename) VALUES (?, ?, ?, ?)'
-    const [result] = await conn.query(sql, [title, content, userid, req.file ? req.file.filename : null])
+    const sql = 'INSERT INTO boards (title, content, userid, filename, origin_filename) VALUES (?, ?, ?, ?, ?)'
+    const [result] = await conn.query(sql, [title, content, userid, req.file ? req.file.filename : null, req.file ? req.file.originalname : null])
     conn.release()
     res.status(201).json({ userid, title })
   } catch (err) {
@@ -83,7 +83,6 @@ router.get('/:id', async (req, res) => {
 
 // 게시글 수정
 router.put('/:id', authenticateJWT, upload.single('file'), async (req, res) => {
-
   const { id } = req.params;
   const { title, content } = req.body;
   const userid = req.user?.userid;
@@ -110,7 +109,7 @@ router.put('/:id', authenticateJWT, upload.single('file'), async (req, res) => {
       if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
     }
     filename = req.file.filename;
-    origin_filename = req.file.origin_filename;
+    origin_filename = req.file.originalname;
   }
   await conn.query('UPDATE boards SET title=?, content=?, filename=?, origin_filename=? WHERE board_id=?', [title, content, filename, origin_filename, id]);
   conn.release();
