@@ -161,7 +161,7 @@ CREATE TABLE database_instances (
 
 
 # 게시판 테이블
-drop table boards;
+drop table if exists boards;
 CREATE TABLE boards (
   board_id int(11) NOT NULL AUTO_INCREMENT,
   title varchar(100) NOT NULL,
@@ -173,6 +173,22 @@ CREATE TABLE boards (
   PRIMARY KEY (board_id),
   INDEX ix_boards_01 (title)
 );
+
+
+# 게시판 댓글 테이블 
+drop table if exists board_replies;
+CREATE TABLE board_replies (
+  reply_id      INT AUTO_INCREMENT PRIMARY KEY,   -- 답글 고유 ID
+  board_id      INT NOT NULL,                     -- 원본 게시글 ID (boards.board_id)
+  parent_id     INT DEFAULT NULL,                 -- 답글의 부모 reply_id (대댓글 지원용, 없으면 NULL)
+  userid        VARCHAR(20) NOT NULL,             -- 작성자 ID
+  content       VARCHAR(2000) NOT NULL,           -- 답글 내용
+  createdAt     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updatedAt     TIMESTAMP NULL DEFAULT NULL,
+  INDEX ix_board_replies_01 (board_id),
+  INDEX ix_board_replies_02 (parent_id)
+);
+
 
 
 # 공통코드 테이블
