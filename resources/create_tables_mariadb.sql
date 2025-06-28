@@ -5,7 +5,7 @@
 
 
 # members 테이블 스키마 생성
-drop table members;
+drop table if exists  members;
 CREATE TABLE members (
   userid varchar(20) NOT NULL,
   name varchar(100) NOT NULL,
@@ -29,7 +29,7 @@ CREATE TABLE members (
 
 
 # login_his 테이블 스키마 생성
-drop table login_his;
+drop table if exists  login_his;
 CREATE TABLE login_his (
   id int(11) NOT NULL AUTO_INCREMENT,
   userid varchar(20) NOT NULL,
@@ -42,7 +42,7 @@ CREATE TABLE login_his (
 
 
 # csv_upload_his 테이블 스키마 생성
-drop table csv_upload_his;
+drop table if exists  csv_upload_his;
 CREATE TABLE csv_upload_his (
   id int(11) NOT NULL AUTO_INCREMENT,
   userid varchar(20) NOT NULL,
@@ -59,7 +59,7 @@ CREATE TABLE csv_upload_his (
 
 
 # servers_temp 테이블 정의
-drop table servers_temp;
+drop table if exists  servers_temp;
 CREATE TABLE servers_temp (
   env_type varchar(10) NOT NULL,   -- 환경구분 (prod/qas/dev)
   corp_id varchar(20) DEFAULT NULL,  -- 법인ID
@@ -83,7 +83,7 @@ CREATE TABLE servers_temp (
 
 
 # 법인별/공정 테이블 정의
-drop table corp_proc_define;
+drop table if exists  corp_proc_define;
 CREATE TABLE corp_proc_define (
   corp_proc_id int(11) NOT NULL AUTO_INCREMENT,
   env_type varchar(10) NOT NULL,   -- 환경구분 (prod/qas/dev)
@@ -94,7 +94,7 @@ CREATE TABLE corp_proc_define (
   db_instance_name_etc varchar(1000) NOT NULL,
   db_instance_cnt int(4) NOT NULL,
   createdAt timestamp DEFAULT current_timestamp(),
-  closedAt timestamp NULL DEFAULT current_timestamp(),
+  closedAt timestamp NULL,
   PRIMARY KEY (corp_proc_id),
   UNIQUE KEY uk_corp_proc_define_01 (env_type, corp_id, proc_type, proc_name),
   INDEX ix_corp_proc_define_01 (proc_name),
@@ -104,7 +104,7 @@ CREATE TABLE corp_proc_define (
 
 
 # servers 테이블 정의
-drop table servers;
+drop table if exists  servers;
 CREATE TABLE servers (
   server_ip varchar(20) NOT NULL,
   hostname varchar(100) DEFAULT NULL,
@@ -114,13 +114,13 @@ CREATE TABLE servers (
   status_cd varchar(1) DEFAULT 'Y',    -- 상태코드(Y-사용,N-미사용)
   descryption varchar(2000) DEFAULT NULL,   -- 설명
   createdAt timestamp DEFAULT current_timestamp(),
-  closedAt timestamp NULL DEFAULT current_timestamp(),
+  closedAt timestamp NULL,
   PRIMARY KEY (server_ip),
   INDEX ix_servers_01 (corp_id, env_type, role_type)
 );
 
 # servers_port 테이블 정의
-drop table servers_port;
+drop table if exists  servers_port;
 CREATE TABLE servers_port (
   server_port_id int(11) NOT NULL AUTO_INCREMENT,
   server_ip varchar(20) NOT NULL,
@@ -132,8 +132,8 @@ CREATE TABLE servers_port (
   stat_check_target_yn varchar(1) DEFAULT 'Y',    -- 상태 체크 대상여부(Y/N)
   descryption varchar(2000) DEFAULT NULL,   -- 설명
   createdAt timestamp DEFAULT current_timestamp(),
-  closedAt timestamp NULL DEFAULT current_timestamp(),
-  lastCheckedAt timestamp NULL DEFAULT current_timestamp(),
+  closedAt timestamp NULL ,
+  lastCheckedAt timestamp NULL ,
   PRIMARY KEY (server_port_id),
   UNIQUE KEY uk_servers_port_01 (server_ip, port),
   INDEX ix_servers_port_01 (proc_id, usage_type)
@@ -142,7 +142,7 @@ CREATE TABLE servers_port (
 
 
 # DB인스턴스정의 테이블
-drop table database_instances;
+drop table if exists  database_instances;
 CREATE TABLE database_instances (
   db_instance_id int(11) NOT NULL AUTO_INCREMENT,
   db_instance_name varchar(100) NOT NULL,
@@ -151,8 +151,8 @@ CREATE TABLE database_instances (
   status_cd varchar(1) DEFAULT 'Y',       -- 상태코드(Y-사용,N-미사용)
   descryption varchar(2000) DEFAULT NULL,   -- 설명
   createdAt timestamp DEFAULT current_timestamp(),
-  closedAt timestamp NULL DEFAULT current_timestamp(),
-  lastCheckedAt timestamp NULL DEFAULT current_timestamp(),
+  closedAt timestamp NULL ,
+  lastCheckedAt timestamp NULL ,
   PRIMARY KEY (db_instance_id),
   INDEX ix_database_instances_01 (db_instance_name, server_port_id),
   FOREIGN KEY (server_port_id) REFERENCES servers_port(server_port_id)
@@ -192,7 +192,7 @@ CREATE TABLE board_replies (
 
 
 # 공통코드 테이블
-drop table common_codes;
+drop table if exists  common_codes;
 CREATE TABLE common_codes (
   group_code varchar(50) NOT NULL,
   code varchar(50) NOT NULL,
