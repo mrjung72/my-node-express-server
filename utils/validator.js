@@ -27,7 +27,7 @@ function validateUserInfo(items) {
     }
 
     if(items['password']) {
-        const result = validateName(items['password'])
+        const result = validatePassword(items['password'])
         if (!result.valid) {
             return result
         }
@@ -86,8 +86,31 @@ function validatePassword(password) {
 
     if (!password || password.length < 4 || password.length > 8) {
         return { valid: false, code: 405, message: '[ERROR] Password must be greater than 4 characters or less than 8 characters' };
-    }     
+    }
+
+    if (isSameChar(password)) {
+        return { valid: false, code: 406, message: '[ERROR] Password cannot contain 3 or more repeated characters or numbers' };
+    }
+
+    if (isSequential(password)) {
+        return { valid: false, code: 407, message: '[ERROR] Password cannot be sequential characters or numbers' };
+    }
+
     return { valid: true };
+}
+
+function isSequential(str) {
+    if (!str) return false
+    let asc = true, desc = true
+    for (let i = 0; i < str.length - 1; i++) {
+        if (str.charCodeAt(i) + 1 !== str.charCodeAt(i + 1)) asc = false
+        if (str.charCodeAt(i) - 1 !== str.charCodeAt(i + 1)) desc = false
+    }
+    return asc || desc
+}
+
+function isSameChar(str) {
+    return /([a-zA-Z0-9])\1{2,}/.test(str)
 }
 
 module.exports = {

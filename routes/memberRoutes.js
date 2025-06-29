@@ -3,6 +3,7 @@ const router = express.Router()
 const mypool = require('../db')
 const bcrypt = require('bcrypt')
 const { authenticateJWT, requireAdmin } = require('../middlewares/auth')
+const { validatePassword } = require('../utils/validator')
 
 // 회원 목록 조회
 router.get('/', authenticateJWT, async (req, res) => {
@@ -48,13 +49,21 @@ router.get('/check-email', async (req, res) => {
 // 회원 등록 (관리자에 의한)
 router.post('/', authenticateJWT, requireAdmin, async (req, res) => {
 
-  let { name, email, userid, isAdmin, user_pc_ip } = req.body
+  let { name, email, userid, isAdmin, user_pc_ip, password } = req.body
   const adminId = req.user?.userid // 인증 미들웨어에서 세팅
   const adminPcIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress
   
+  // 비밀번호 유효성 검사
+  if (password) {
+    const result = validatePassword(password)
+    if (!result.valid) {
+      return res.status(400).json({ message: result.message })
+    }
+  }
+
   try {
     const conn = await mypool.getConnection()
-    const hashedPassword = await bcrypt.hash(process.env.USER_INIT_PASSWORD, 10)
+    const hashedPassword = await bcrypt.hash(password || process.env.USER_INIT_PASSWORD, 10)
     const sql = 'INSERT INTO members (name, email, userid, password, status_cd, isAdmin, user_pc_ip, reg_pc_ip, reg_userid) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
     const [result] = await conn.query(sql, [name, email, userid, hashedPassword, 'Y', isAdmin, user_pc_ip, adminPcIp, adminId])
     conn.release()
