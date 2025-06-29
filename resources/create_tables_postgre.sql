@@ -1,4 +1,3 @@
-
 /*---------------------------------------------------------
  * 사이트에서 사용되는 DB테이블을 정의한다.(PostgreSQL)
  *---------------------------------------------------------*/
@@ -173,5 +172,8 @@ values
 ('SERVER_ROLE_TYPE', 'Standby', 'Standby'),
 ('SERVER_ROLE_TYPE', 'async', 'Async'),
 ('USE_YN', 'Y','사용'), 
-('USE_YN','N','미사용');
+('USE_YN','N','미사용'),
+('DB_TYPE', 'IF','IF'),
+('DB_TYPE', 'EIF','EIF'),
+('DB_TYPE', 'BASIC','BASIC');
 
