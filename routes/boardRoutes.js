@@ -15,10 +15,14 @@ const upload = multer({ dest: uploadDir });
 // 게시글 목록
 router.get('/', async (req, res) => {
     const conn = await mypool.getConnection();
-    const [rows] = await conn.query('SELECT * FROM boards order by board_id desc ');
+    const [rows] = await conn.query(`
+      SELECT b.*, 
+        (SELECT COUNT(*) FROM board_replies r WHERE r.board_id = b.board_id) AS reply_count
+      FROM boards b
+      ORDER BY board_id DESC
+    `);
     conn.release();
-    
-  res.json(rows);
+    res.json(rows);
 });
 
 // 게시글 등록 (파일 첨부 가능, 인증 필요)
