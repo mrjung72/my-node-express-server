@@ -147,5 +147,16 @@ router.get('/init-password', authenticateJWT, requireAdmin, async (req, res) => 
   }
 });
 
+// 미승인 가입회원 수 반환
+router.get('/pending-count', authenticateJWT, requireAdmin, async (req, res) => {
+  try {
+    const conn = await mypool.getConnection();
+    const [rows] = await conn.query("SELECT COUNT(*) as count FROM members WHERE status_cd = 'A'");
+    conn.release();
+    res.json({ count: rows[0].count });
+  } catch (err) {
+    res.status(500).json({ message: 'DB error', error: err.message });
+  }
+});
 
 module.exports = router
