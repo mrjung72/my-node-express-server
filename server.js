@@ -1,6 +1,7 @@
 const express = require('express')
 const cors = require('cors')
 const dotenv = require('dotenv')
+const { loadAllCodes } = require('./utils/CommonCodeCache')
 dotenv.config()
 
 const app = express()
@@ -33,6 +34,11 @@ app.use('/api/server-check', telnetRoutes)
 app.use('/uploads', express.static('uploads'))
 app.use('/api/board', boardRoutes)
 app.use('/api/board-replies', boardReplyRoutes)
+
+// 서버 시작 시 공통코드 캐시 로딩
+loadAllCodes().then(() => {
+  console.log('공통코드 캐시 로딩 완료')
+})
 
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`)
