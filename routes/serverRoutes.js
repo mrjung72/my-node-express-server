@@ -45,8 +45,10 @@ router.get('/db', authenticateJWT, async (req, res) => {
   const conn = await mypool.getConnection()
   const query = `
             SELECT d.db_instance_name
-              , S.corp_id 
+              , d.db_instance_type db_type
+              , s.corp_id 
               , p.proc_id 
+              , p.proc_detail
               , P.server_ip 
               , P.port 
               , S.env_type 
