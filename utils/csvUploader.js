@@ -19,10 +19,12 @@ async function uploadCsvFile(filePath, tableName, columns, db, isInitData, upper
                 // 먼저 원본 행 구성
                 const baseRow = columns.map(col => {
                     const trimmedCol = col.trim()
-                    let value = data[trimmedCol]
+                    let value = data[trimmedCol.toUpperCase()]
 
                     // 값이 존재하는 컬럼수를 계산한다.
                     if(value !== undefined && value.trim() !== '') {
+
+                        value = value.trim()
                         countColumnExistValue += 1
 
                         // 서버 아이피 값 형식을 검증한다.

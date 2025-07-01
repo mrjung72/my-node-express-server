@@ -39,12 +39,13 @@ async function inputServersData(db) {
                             from servers_temp
                             group by server_ip, port`);
         
-        await db.execute(`insert into database_instances (db_instance_name, db_instance_type, server_port_id)
+        await db.execute(`insert into database_instances (db_instance_name, db_instance_type, server_port_id, proc_id, proc_detail)
                             select ap.db_name,
                                 case when ap.db_type is null or ap.db_type = '' then 'MAIN' else  ap.db_type end db_type,
-                                (select sp.server_port_id from servers_port sp where sp.server_ip = db.server_ip and sp.port = db.port ) server_port_id
+                                (select sp.server_port_id from servers_port sp where sp.server_ip = db.server_ip and sp.port = db.port ) server_port_id,
+                                proc_id, proc_detail
                             from (
-                                select corp_id , group_id , db_name , db_type , env_type
+                                select corp_id , group_id , db_name , db_type , env_type, proc_id, proc_detail
                                 from servers_temp st
                                 where usage_type = 'AP'
                                 and group_id > 0
@@ -53,10 +54,16 @@ async function inputServersData(db) {
                                 select env_type , corp_id , group_id , server_ip , port
                                 from servers_temp st
                                 where usage_type = 'DB'
+                                and env_type  != 'DEV'
                             ) db
                             where ap.env_type = db.env_type
                             and ap.corp_id = db.corp_id
                             and ap.group_id = db.group_id
+                            union all
+                            select db_name, 'MAIN' db_type, (select sp.server_port_id from servers_port sp where sp.server_ip = t.server_ip and sp.port = t.port ) server_port_id, proc_id, proc_detail
+                            from servers_temp t
+                            where usage_type = 'DB'
+                            and env_type  = 'DEV'
                         `);
 
         await db.execute(`SET FOREIGN_KEY_CHECKS = 1`);
