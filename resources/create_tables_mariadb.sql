@@ -150,6 +150,7 @@ CREATE TABLE database_instances (
   proc_id varchar(20) DEFAULT NULL,   -- 공정ID
   proc_detail varchar(100) DEFAULT NULL,   -- 공정 상세
   status_cd varchar(1) DEFAULT 'Y',       -- 상태코드(Y-사용,N-미사용)
+  corp_id varchar(20) DEFAULT NULL,  -- 법인ID (개발DB 용)
   descryption varchar(2000) DEFAULT NULL,   -- 설명
   createdAt timestamp DEFAULT current_timestamp(),
   closedAt timestamp NULL ,

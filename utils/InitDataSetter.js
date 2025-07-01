@@ -39,11 +39,11 @@ async function inputServersData(db) {
                             from servers_temp
                             group by server_ip, port`);
         
-        await db.execute(`insert into database_instances (db_instance_name, db_instance_type, server_port_id, proc_id, proc_detail)
+        await db.execute(`insert into database_instances (db_instance_name, db_instance_type, server_port_id, proc_id, proc_detail, corp_id)
                             select ap.db_name,
                                 case when ap.db_type is null or ap.db_type = '' then 'MAIN' else  ap.db_type end db_type,
                                 (select sp.server_port_id from servers_port sp where sp.server_ip = db.server_ip and sp.port = db.port ) server_port_id,
-                                proc_id, proc_detail
+                                proc_id, proc_detail, ap.corp_id
                             from (
                                 select corp_id , group_id , db_name , db_type , env_type, proc_id, proc_detail
                                 from servers_temp st
@@ -60,7 +60,9 @@ async function inputServersData(db) {
                             and ap.corp_id = db.corp_id
                             and ap.group_id = db.group_id
                             union all
-                            select db_name, 'MAIN' db_type, (select sp.server_port_id from servers_port sp where sp.server_ip = t.server_ip and sp.port = t.port ) server_port_id, proc_id, proc_detail
+                            select db_name, 'MAIN' db_type, 
+                                    (select sp.server_port_id from servers_port sp where sp.server_ip = t.server_ip and sp.port = t.port ) server_port_id, 
+                                    proc_id, proc_detail, corp_id
                             from servers_temp t
                             where usage_type = 'DB'
                             and env_type  = 'DEV'

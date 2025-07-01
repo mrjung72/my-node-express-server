@@ -46,7 +46,7 @@ router.get('/db', authenticateJWT, async (req, res) => {
   const query = `
             SELECT d.db_instance_name
               , d.db_instance_type db_type
-              , s.corp_id 
+              , d.corp_id 
               , d.proc_id 
               , d.proc_detail
               , P.server_ip 
