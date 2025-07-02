@@ -192,6 +192,23 @@ CREATE TABLE board_replies (
 );
 
 
+# 원격 DB서버 접속 로그 테이블
+drop table if exists  check_server_log;
+CREATE TABLE check_server_log (
+  id int(11) NOT NULL auto_increment primary key,
+  server_ip varchar(20) NOT NULL,
+  port nvarchar(4) NOT NULL,
+  dbname varchar(100) DEFAULT NULL,   
+  pc_ip varchar(20) DEFAULT NULL,   
+  result_code varchar(10) DEFAULT NULL,
+  result_msg varchar(1000) NOT NULL,  
+  collapsed_time int(4) DEFAULT 0, 
+  createdAt timestamp DEFAULT current_timestamp(),
+  INDEX ix_check_server_log_01 (server_ip),
+  INDEX ix_check_server_log_02 (pc_ip)
+);
+
+
 
 # 공통코드 테이블
 drop table if exists  common_codes;
