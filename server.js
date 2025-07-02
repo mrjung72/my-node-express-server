@@ -21,6 +21,7 @@ const codeRoutes = require('./routes/codeRoutes')
 const telnetRoutes = require('./routes/telnetRoutes')
 const boardRoutes = require('./routes/boardRoutes')
 const boardReplyRoutes = require('./routes/boardReplyRoutes')
+const checkServerLogRoutes = require('./routes/checkServerLogRoutes')
 
 // 📌 라우터 등록
 app.use('/api/members', memberRoutes)
@@ -34,6 +35,7 @@ app.use('/api/server-check', telnetRoutes)
 app.use('/uploads', express.static('uploads'))
 app.use('/api/board', boardRoutes)
 app.use('/api/board-replies', boardReplyRoutes)
+app.use('/api/check-server-log', checkServerLogRoutes)
 
 // 서버 시작 시 공통코드 캐시 로딩
 loadAllCodes().then(() => {
