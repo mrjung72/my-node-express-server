@@ -205,7 +205,8 @@ CREATE TABLE check_server_log (
   collapsed_time int(4) DEFAULT 0, 
   createdAt timestamp DEFAULT current_timestamp(),
   INDEX ix_check_server_log_01 (server_ip),
-  INDEX ix_check_server_log_02 (pc_ip)
+  INDEX ix_check_server_log_02 (dbname),
+  INDEX ix_check_server_log_03 (pc_ip)
 );
 
 

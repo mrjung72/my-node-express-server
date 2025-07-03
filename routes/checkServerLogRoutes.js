@@ -4,6 +4,7 @@ const mypool = require('../db');
 
 // sql_exec_log 기록용 API
 router.post('/', async (req, res) => {
+
   const {
     server_ip,
     port,
@@ -27,6 +28,7 @@ router.post('/', async (req, res) => {
     conn.release();
     res.json({ success: true, insertId: result.insertId });
   } catch (err) {
+    console.error(err)
     res.status(500).json({ error: err.message });
   }
 });
