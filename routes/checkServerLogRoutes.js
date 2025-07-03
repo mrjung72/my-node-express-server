@@ -11,10 +11,12 @@ router.post('/', async (req, res) => {
     dbname,
     pc_ip,
     result_code,
-    result_msg,
+    error_code,
+    error_msg,
     collapsed_time,
     result_code_db,
-    result_msg_db,
+    error_code_db,
+    error_msg_db,
     collapsed_time_db
   } = req.body;
 
@@ -25,8 +27,8 @@ router.post('/', async (req, res) => {
   try {
     const conn = await mypool.getConnection();
     const [result] = await conn.execute(
-      'INSERT INTO check_server_log (server_ip, port, dbname, pc_ip, result_code, result_msg, collapsed_time, result_code_db, result_msg_db, collapsed_time_db) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [server_ip, port, dbname, pc_ip, result_code, result_msg, collapsed_time, result_code_db, result_msg_db, collapsed_time_db]
+      'INSERT INTO check_server_log (server_ip, port, dbname, pc_ip, result_code, error_code, error_msg, collapsed_time, result_code_db, error_code_db, error_msg_db, collapsed_time_db) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [server_ip, port, dbname, pc_ip, result_code, error_code, error_msg, collapsed_time, result_code_db, error_code_db, error_msg_db, collapsed_time_db]
     );
     conn.release();
     res.json({ success: true, insertId: result.insertId });
