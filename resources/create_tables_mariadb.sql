@@ -197,18 +197,18 @@ drop table if exists  check_server_log;
 CREATE TABLE check_server_log (
   id int(11) NOT NULL auto_increment primary key,
   check_unit_id varchar(20) NOT NULL,
-  check_method varchar(20) NOT NULL,   -- TELNET, DB_CONN
   server_ip varchar(20) NOT NULL,
   port nvarchar(4) NOT NULL,
   dbname varchar(100) DEFAULT NULL,   
-  pc_ip varchar(20) DEFAULT NULL,   
-  result_code varchar(10) DEFAULT NULL,    -- [1,0]
-  error_code varchar(20) NOT NULL,         
-  error_msg varchar(1000) NOT NULL,  
+  pc_ip varchar(20) NOT NULL,   
+  check_method varchar(20) NOT NULL,   -- TELNET, DB_CONNECTION
+  result_code varchar(10) NOT NULL,    -- [1,0]
+  error_code varchar(20) DEFAULT NULL,         
+  error_msg varchar(1000) DEFAULT NULL,  
   collapsed_time int(4) DEFAULT 0, 
   result_code_db varchar(10) DEFAULT NULL,
-  error_code_db varchar(20) NOT NULL,  
-  error_msg_db varchar(1000) NOT NULL,  
+  error_code_db varchar(20) DEFAULT NULL,  
+  error_msg_db varchar(1000) DEFAULT NULL,  
   collapsed_time_db int(4) DEFAULT 0, 
   createdAt timestamp DEFAULT current_timestamp(),
   INDEX ix_check_server_log_01 (server_ip),
