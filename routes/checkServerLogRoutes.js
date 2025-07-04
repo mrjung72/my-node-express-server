@@ -67,4 +67,49 @@ router.post('/telnet', async (req, res) => {
   }
 });
 
+
+// 서버 접속 상태체크 이력 조회 API 추가
+router.get('/history', async (req, res) => {
+  try {
+    const clientIp = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 
+                    (req.connection.socket ? req.connection.socket.remoteAddress : null) ||
+                    (req.headers['x-forwarded-for'] ? req.headers['x-forwarded-for'].split(',')[0] : null)
+    
+    // 실제 클라이언트 IP 추출 (프록시 환경 고려)
+    const realClientIp = clientIp.replace(/^::ffff:/, '')
+    
+    const conn = await mypool.getConnection()
+    const query = `
+      SELECT 
+        check_unit_id, 
+        server_ip,
+        port,
+        pc_ip,
+        result_code,
+        error_code,
+        error_msg,
+        collapsed_time
+      FROM check_server_log 
+      WHERE pc_ip = ?
+      ORDER BY createdAt DESC
+      LIMIT 1000
+    `
+    const [rows] = await conn.query(query, [realClientIp])
+    conn.release()
+    
+    res.json({
+      success: true,
+      data: rows,
+      total: rows.length
+    })
+    
+  } catch (error) {
+    console.error('서버 접속 이력 조회 오류:', error)
+    res.status(500).json({
+      success: false,
+      error: '서버 접속 이력 조회 중 오류가 발생했습니다.'
+    })
+  }
+})
+
 module.exports = router; 
