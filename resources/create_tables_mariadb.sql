@@ -206,16 +206,11 @@ CREATE TABLE check_server_log (
   error_code varchar(20) DEFAULT NULL,         
   error_msg varchar(1000) DEFAULT NULL,  
   collapsed_time int(4) DEFAULT 0, 
-  result_code_db varchar(10) DEFAULT NULL,
-  error_code_db varchar(20) DEFAULT NULL,  
-  error_msg_db varchar(1000) DEFAULT NULL,  
-  collapsed_time_db int(4) DEFAULT 0, 
   createdAt timestamp DEFAULT current_timestamp(),
   INDEX ix_check_server_log_01 (server_ip),
   INDEX ix_check_server_log_02 (dbname),
   INDEX ix_check_server_log_03 (pc_ip, check_unit_id),
-  INDEX ix_check_server_log_04 (error_code),
-  INDEX ix_check_server_log_05 (error_code_db)
+  INDEX ix_check_server_log_04 (error_code)
 );
 
 
