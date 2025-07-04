@@ -14,11 +14,7 @@ router.post('/db', async (req, res) => {
     result_code,
     error_code,
     error_msg,
-    collapsed_time,
-    result_code_db,
-    error_code_db,
-    error_msg_db,
-    collapsed_time_db
+    collapsed_time
   } = req.body;
 
   if (!server_ip || !port || !dbname || !pc_ip) {
@@ -28,8 +24,8 @@ router.post('/db', async (req, res) => {
   try {
     const conn = await mypool.getConnection();
     const [result] = await conn.execute(
-      'INSERT INTO check_server_log (check_unit_id, check_method, server_ip, port, dbname, pc_ip, result_code, error_code, error_msg, collapsed_time, result_code_db, error_code_db, error_msg_db, collapsed_time_db) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [check_unit_id, 'DB_CONN', server_ip, port, dbname, pc_ip, result_code, error_code, error_msg, collapsed_time, result_code_db, error_code_db, error_msg_db, collapsed_time_db]
+      'INSERT INTO check_server_log (check_unit_id, check_method, server_ip, port, dbname, pc_ip, result_code, error_code, error_msg, collapsed_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [check_unit_id, 'DB_CONN', server_ip, port, dbname, pc_ip, result_code, error_code, error_msg, collapsed_time]
     );
     conn.release();
     res.json({ success: true, insertId: result.insertId });
