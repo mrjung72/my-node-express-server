@@ -104,11 +104,11 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- 8. 초기 파티션 생성 (2024년 1월부터 2025년 12월까지)
+-- 8. 초기 파티션 생성 (현재 주부터)
 DO $$
 DECLARE
-    current_date DATE := DATE '2024-01-01';
-    end_date DATE := DATE '2025-12-31';
+    current_date DATE := CURRENT_DATE;
+    end_date DATE := CURRENT_DATE + INTERVAL '2 weeks';
 BEGIN
     WHILE current_date <= end_date LOOP
         PERFORM create_weekly_partition(current_date);
@@ -144,12 +144,12 @@ $$ LANGUAGE plpgsql;
 -- 주간 파티션 추가 (매주 월요일 새벽 2시)
 -- SELECT cron.schedule('add-weekly-partition', '0 2 * * 1', 'SELECT create_weekly_partition(CURRENT_DATE + INTERVAL ''1 week'');');
 
--- 오래된 파티션 정리 (매일 새벽 3시)
--- SELECT cron.schedule('cleanup-old-partitions', '0 3 * * *', 'SELECT drop_old_partitions(52);');
+-- 오래된 파티션 정리 (매일 새벽 3시, 1주일 보관)
+-- SELECT cron.schedule('cleanup-old-partitions', '0 3 * * *', 'SELECT drop_old_partitions(1);');
 
 -- 11. 사용 예시
 -- 특정 주 파티션 생성: SELECT create_weekly_partition('2025-01-06');
--- 오래된 파티션 정리: SELECT drop_old_partitions(52);
+-- 오래된 파티션 정리: SELECT drop_old_partitions(1);  -- 1주일 보관
 -- 파티션 정보 확인: SELECT * FROM get_partition_info();
 
 -- 12. 파티션 정보 확인 쿼리

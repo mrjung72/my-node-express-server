@@ -89,7 +89,7 @@ class PartitionManager {
     /**
      * 오래된 파티션 삭제 (MariaDB)
      */
-    async dropOldPartitionsMariaDB(keepWeeks = 52) {
+    async dropOldPartitionsMariaDB(keepWeeks = 1) {
         try {
             const sql = `CALL DropOldPartitions(${keepWeeks})`;
             await this.connection.execute(sql);
@@ -104,7 +104,7 @@ class PartitionManager {
     /**
      * 오래된 파티션 삭제 (PostgreSQL)
      */
-    async dropOldPartitionsPostgreSQL(keepWeeks = 52) {
+    async dropOldPartitionsPostgreSQL(keepWeeks = 1) {
         try {
             const sql = `SELECT drop_old_partitions($1)`;
             const result = await this.connection.query(sql, [keepWeeks]);
@@ -208,8 +208,8 @@ class PartitionManager {
 
             // 오래된 파티션 정리
             const cleanupResult = this.dbType === 'mariadb'
-                ? await this.dropOldPartitionsMariaDB(52)
-                : await this.dropOldPartitionsPostgreSQL(52);
+                ? await this.dropOldPartitionsMariaDB(1)
+                : await this.dropOldPartitionsPostgreSQL(1);
 
             if (!cleanupResult.success) {
                 console.warn('Failed to cleanup old partitions:', cleanupResult.error);
@@ -280,7 +280,7 @@ class PartitionScheduler {
                 if (this.partitionManager.dbType === 'mariadb') {
                     await this.partitionManager.dropOldPartitionsMariaDB(52);
                 } else {
-                    await this.partitionManager.dropOldPartitionsPostgreSQL(52);
+                    await this.partitionManager.dropOldPartitionsPostgreSQL(1);
                 }
             } catch (error) {
                 console.error('Daily partition cleanup failed:', error);
