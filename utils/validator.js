@@ -85,15 +85,15 @@ function validateName(name) {
 function validatePassword(password) {
 
     if (!password || password.length < 4 || password.length > 8) {
-        return { valid: false, code: 405, message: '[ERROR] Password must be greater than 4 characters or less than 8 characters' };
+        return { valid: false, code: 405, message: '[ERROR] 최소 4자리, 최대 8자리 비밀번호를 입력하세요.' };
     }
 
     if (isSameChar(password)) {
-        return { valid: false, code: 406, message: '[ERROR] Password cannot contain 3 or more repeated characters or numbers' };
+        return { valid: false, code: 406, message: '[ERROR] 동일한 문자 또는 숫자는 2자리까지 허용합니다.' };
     }
 
     if (isSequential(password)) {
-        return { valid: false, code: 407, message: '[ERROR] Password cannot be sequential characters or numbers' };
+        return { valid: false, code: 407, message: '[ERROR] 연속된 문자 또는 숫자가 포함되어 있습니다.' };
     }
 
     return { valid: true };

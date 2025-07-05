@@ -5,6 +5,7 @@ const bcrypt = require('bcrypt')
 const { authenticateJWT } = require('../middlewares/auth')
 const { validateUserInfo } = require('../utils/validator')
 const admins = require('../utils/AdminDefine')
+const { validatePassword } = require('../utils/validator')
 
 
 // 내정보 조회
@@ -22,7 +23,6 @@ router.get('/', authenticateJWT, async (req, res) => {
     const rows = await conn.query('SELECT * FROM members WHERE userid = ?', [userid])
     conn.release()
     res.json(rows[0][0])
-    console.log(rows[0])
   } catch (err) {
     console.error(err)
     res.status(500).send('Database query failed')
@@ -77,5 +77,47 @@ router.post('/', async (req, res) => {
     res.status(500).send('[ERROR] ' + err.message)
   }
 })
+
+
+// 본인 비밀번호 변경
+router.put('/change-password', authenticateJWT, async (req, res) => {
+  console.log('memberRoutes 본인 비밀번호 변경: ', req.body);
+  const { currentPassword, newPassword } = req.body;
+  const userid = req.user?.userid;
+
+  console.log('change-password: ', req.body);
+
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({ message: '현재 비밀번호와 새 비밀번호를 모두 입력하세요.' });
+  }
+
+  // 새 비밀번호 유효성 검사
+  const result = validatePassword(newPassword);
+  if (!result.valid) {
+    return res.status(400).json({ message: result.message });
+  }
+
+  try {
+    const conn = await mypool.getConnection();
+    const [rows] = await conn.query('SELECT password FROM members WHERE userid = ?', [userid]);
+    if (!rows.length) {
+      conn.release();
+      return res.status(404).json({ message: '사용자를 찾을 수 없습니다.' });
+    }
+    const user = rows[0];
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      conn.release();
+      return res.status(401).json({ message: '현재 비밀번호가 일치하지 않습니다.' });
+    }
+    const hashed = await bcrypt.hash(newPassword, 10);
+    await conn.query('UPDATE members SET password = ? WHERE userid = ?', [hashed, userid]);
+    conn.release();
+    res.json({ message: '비밀번호가 성공적으로 변경되었습니다.' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: '비밀번호 변경 중 오류가 발생했습니다.' });
+  }
+});
 
 module.exports = router
