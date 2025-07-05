@@ -4,6 +4,7 @@ const mypool = require('../db')
 const bcrypt = require('bcrypt')
 const { authenticateJWT, requireAdmin } = require('../middlewares/auth')
 const { validatePassword } = require('../utils/validator')
+const axios = require('axios')
 
 // 회원 목록 조회
 router.get('/', authenticateJWT, async (req, res) => {
@@ -117,6 +118,18 @@ router.get('/approval', authenticateJWT, requireAdmin, async (req, res) => {
 
   try {
     const conn = await mypool.getConnection();
+    
+    // 회원 정보 조회
+    const [memberRows] = await conn.query('SELECT name, email FROM members WHERE userid = ? AND status_cd = ?', [userid, 'A']);
+    
+    if (memberRows.length === 0) {
+      conn.release();
+      return res.status(404).json({ message: '[ERROR] Member not found or already approved' });
+    }
+
+    const member = memberRows[0];
+    
+    // 상태 업데이트
     const [result] = await conn.query('UPDATE members SET status_cd = ? WHERE userid = ? AND status_cd = ?', ['Y', userid, 'A']);
     conn.release();
 
@@ -124,7 +137,29 @@ router.get('/approval', authenticateJWT, requireAdmin, async (req, res) => {
       return res.status(404).json({ message: '[ERROR] Member not found' });
     }
 
-    return res.status(204).end(); // 성공. No Content
+    // 이메일 전송 (비동기로 처리하여 응답 지연 방지)
+    try {
+      const emailResponse = await axios.post(`${req.protocol}://${req.get('host')}/api/email/send-approval-notification`, {
+        email: member.email,
+        name: member.name,
+        userid: userid
+      });
+      
+      console.log('승인 알림 이메일 전송 성공:', emailResponse.data);
+    } catch (emailError) {
+      console.error('승인 알림 이메일 전송 실패:', emailError.message);
+      // 이메일 전송 실패해도 승인은 성공으로 처리
+    }
+
+    return res.json({ 
+      message: '회원 승인이 완료되었습니다.',
+      emailSent: true,
+      member: {
+        userid: userid,
+        name: member.name,
+        email: member.email
+      }
+    });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: '[ERROR] Approval failed', error: err.message });
