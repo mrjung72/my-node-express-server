@@ -156,8 +156,7 @@ CREATE TABLE database_instances (
   closedAt timestamp NULL ,
   lastCheckedAt timestamp NULL ,
   PRIMARY KEY (db_instance_id),
-  INDEX ix_database_instances_01 (db_instance_name, server_port_id),
-  FOREIGN KEY (server_port_id) REFERENCES servers_port(server_port_id)
+  INDEX ix_database_instances_01 (db_instance_name, server_port_id)
 );
 
 
@@ -193,24 +192,35 @@ CREATE TABLE board_replies (
 
 
 # 원격 DB서버 접속 로그 테이블
-drop table if exists  check_server_log;
-CREATE TABLE check_server_log (
+drop table if exists  check_server_log_master;
+CREATE TABLE check_server_log_master (
+  check_unit_id varchar(20) NOT NULL  primary key,
+  yyyymmdd varchar(8) NOT NULL,   -- 체크 일자
+  hhmmss varchar(6) NOT NULL,   -- 체크 시간
+  pc_ip varchar(20) NOT NULL,   
+  check_method varchar(20) NOT NULL,   -- TELNET, DB_CONN
+  createdAt timestamp DEFAULT current_timestamp(),
+  INDEX ix_check_server_log_master_01 (yyyymmdd, hhmmss),
+  INDEX ix_check_server_log_master_02 (pc_ip, check_method, check_unit_id)
+);
+
+# 원격 DB서버 접속 로그 상세 테이블
+drop table if exists  check_server_log_dtl;
+CREATE TABLE check_server_log_dtl (
   id int(11) NOT NULL auto_increment primary key,
   check_unit_id varchar(20) NOT NULL,
   server_ip varchar(20) NOT NULL,
   port nvarchar(4) NOT NULL,
   dbname varchar(100) DEFAULT NULL,   
-  pc_ip varchar(20) NOT NULL,   
-  check_method varchar(20) NOT NULL,   -- TELNET, DB_CONNECTION
   result_code varchar(10) NOT NULL,    -- [1,0]
   error_code varchar(20) DEFAULT NULL,         
   error_msg varchar(1000) DEFAULT NULL,  
   collapsed_time int(4) DEFAULT 0, 
   createdAt timestamp DEFAULT current_timestamp(),
-  INDEX ix_check_server_log_01 (server_ip),
-  INDEX ix_check_server_log_02 (dbname),
-  INDEX ix_check_server_log_03 (pc_ip, check_unit_id),
-  INDEX ix_check_server_log_04 (error_code)
+  INDEX ix_check_server_log_dtl_01 (check_unit_id),
+  INDEX ix_check_server_log_dtl_02 (server_ip),
+  INDEX ix_check_server_log_dtl_03 (dbname),
+  INDEX ix_check_server_log_dtl_04 (error_code)
 );
 
 
@@ -249,6 +259,8 @@ values
 ('SERVER_ROLE_TYPE', 'Active', 'Active'),
 ('SERVER_ROLE_TYPE', 'Standby', 'Standby'),
 ('SERVER_ROLE_TYPE', 'async', 'Async'),
+('CHECK_METHOD', 'TELNET', 'TELNET'),
+('CHECK_METHOD', 'DB_CONN', 'DB접속'),
 ('USE_YN', 'Y','사용'), 
 ('USE_YN','N','미사용');
 
