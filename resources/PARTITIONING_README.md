@@ -64,8 +64,8 @@ node scripts/manage-partitions.js init mariadb
 # 특정 주 파티션 추가
 node scripts/manage-partitions.js add 2025 1
 
-# 오래된 파티션 정리 (52주 보관)
-node scripts/manage-partitions.js cleanup 52
+# 오래된 파티션 정리 (1주일 보관)
+node scripts/manage-partitions.js cleanup 1
 
 # 파티션 정보 조회
 node scripts/manage-partitions.js info
@@ -125,7 +125,7 @@ scheduler.startDailyScheduler();
 ### 2. 오래된 파티션 정리
 
 - **스케줄**: 매일 새벽 3시
-- **기능**: 52주(1년) 이전 파티션 자동 삭제
+- **기능**: 1주일 이전 파티션 자동 삭제
 
 ### 3. 스토어드 프로시저/함수
 

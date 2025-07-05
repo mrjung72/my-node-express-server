@@ -58,7 +58,7 @@ function showHelp() {
 명령어:
   init [dbType]           파티션 초기화 및 설정 (mariadb|postgresql)
   add [year] [week]       특정 주 파티션 추가
-  cleanup [weeks]         오래된 파티션 정리 (기본값: 52주)
+  cleanup [weeks]         오래된 파티션 정리 (기본값: 1주일)
   info                    파티션 정보 조회
   check                   파티션 상태 체크 및 복구
   schedule [start|stop]   스케줄러 시작/중지
@@ -303,7 +303,7 @@ async function main() {
                 break;
                 
             case 'cleanup':
-                const keepWeeks = parseInt(args[1]) || 52;
+                const keepWeeks = parseInt(args[1]) || 1;
                 await cleanupPartitions(dbType, keepWeeks);
                 break;
                 

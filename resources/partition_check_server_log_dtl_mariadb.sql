@@ -136,16 +136,16 @@ BEGIN
     CALL AddWeeklyPartition(next_year, next_week);
 END;
 
--- 오래된 파티션 정리 이벤트 (매일 새벽 3시)
+-- 오래된 파티션 정리 이벤트 (매일 새벽 3시, 1주일 보관)
 CREATE EVENT IF NOT EXISTS cleanup_old_partitions_event
 ON SCHEDULE EVERY 1 DAY
 STARTS CURRENT_TIMESTAMP + INTERVAL 3 HOUR
 DO
 BEGIN
-    CALL DropOldPartitions(52);
+    CALL DropOldPartitions(1);
 END;
 
 -- 8. 사용 예시
 -- 특정 주 파티션 추가: CALL AddWeeklyPartition(2025, 1);
--- 오래된 파티션 정리: CALL DropOldPartitions(52);
+-- 오래된 파티션 정리: CALL DropOldPartitions(1);  -- 1주일 보관
 -- 파티션 정보 확인: SELECT * FROM INFORMATION_SCHEMA.PARTITIONS WHERE TABLE_NAME = 'check_server_log_dtl'; 
