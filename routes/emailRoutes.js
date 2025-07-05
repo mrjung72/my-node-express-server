@@ -8,7 +8,7 @@ const emailCodes = new Map(); // 실제로는 Redis나 DB에 저장 권장
 
 // 이메일 전송 공통 함수
 const sendEmail = async (to, subject, htmlContent) => {
-  const transporter = nodemailer.createTransporter({
+  const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
       user: process.env.SMTP_USER,  // ex: 'your@gmail.com'
