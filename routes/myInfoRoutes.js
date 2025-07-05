@@ -81,11 +81,9 @@ router.post('/', async (req, res) => {
 
 // 본인 비밀번호 변경
 router.put('/change-password', authenticateJWT, async (req, res) => {
-  console.log('memberRoutes 본인 비밀번호 변경: ', req.body);
+
   const { currentPassword, newPassword } = req.body;
   const userid = req.user?.userid;
-
-  console.log('change-password: ', req.body);
 
   if (!currentPassword || !newPassword) {
     return res.status(400).json({ message: '현재 비밀번호와 새 비밀번호를 모두 입력하세요.' });
