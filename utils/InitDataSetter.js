@@ -50,6 +50,7 @@ async function inputServersData(db) {
                                 where usage_type = 'AP'
                                 and group_id > 0
                                 and LENGTH(trim(db_name)) > 3
+                                group by corp_id , group_id , db_name , db_type , env_type, proc_id, proc_detail
                             ) ap, (
                                 select env_type , corp_id , group_id , server_ip , port
                                 from servers_temp st
