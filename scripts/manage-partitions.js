@@ -33,16 +33,7 @@ function loadConfig() {
             host: process.env.DB_HOST || 'localhost',
             user: process.env.DB_USER || 'root',
             password: process.env.DB_PASSWORD || '',
-            database: process.env.DB_NAME || 'client_util_app',
-            dbType: 'mariadb'
-        },
-        postgresql: {
-            host: process.env.PG_HOST || 'localhost',
-            user: process.env.PG_USER || 'postgres',
-            password: process.env.PG_PASSWORD || '',
-            database: process.env.PG_DB || 'client_util_app',
-            port: process.env.PG_PORT || 5432,
-            dbType: 'postgresql'
+            database: process.env.DB_NAME || 'client_util_app'
         }
     };
 }
@@ -56,7 +47,7 @@ function showHelp() {
   node scripts/manage-partitions.js [command] [options]
 
 명령어:
-  init [dbType]           파티션 초기화 및 설정 (mariadb|postgresql)
+  init                    파티션 초기화 및 설정
   add [year] [week]       특정 주 파티션 추가
   cleanup [weeks]         오래된 파티션 정리 (기본값: 1주일)
   info                    파티션 정보 조회
@@ -64,12 +55,11 @@ function showHelp() {
   schedule [start|stop]   스케줄러 시작/중지
 
 옵션:
-  --db-type <type>        데이터베이스 타입 (mariadb|postgresql)
   --config <path>         설정 파일 경로
   --help                  도움말 출력
 
 예시:
-  node scripts/manage-partitions.js init mariadb
+  node scripts/manage-partitions.js init
   node scripts/manage-partitions.js add 2025 1
   node scripts/manage-partitions.js cleanup 26
   node scripts/manage-partitions.js info
@@ -78,19 +68,14 @@ function showHelp() {
 }
 
 // 파티션 초기화
-async function initPartitions(dbType) {
+async function initPartitions() {
     const config = loadConfig();
-    const dbConfig = config[dbType];
-    
-    if (!dbConfig) {
-        console.error(`지원하지 않는 데이터베이스 타입: ${dbType}`);
-        process.exit(1);
-    }
+    const dbConfig = config.mariadb;
     
     const partitionManager = new PartitionManager(dbConfig);
     
     try {
-        console.log(`${dbType} 데이터베이스에 연결 중...`);
+        console.log('MariaDB 데이터베이스에 연결 중...');
         await partitionManager.connect();
         
         console.log('파티션 초기화 중...');
@@ -119,9 +104,9 @@ async function initPartitions(dbType) {
 }
 
 // 특정 주 파티션 추가
-async function addPartition(dbType, year, week) {
+async function addPartition(year, week) {
     const config = loadConfig();
-    const dbConfig = config[dbType];
+    const dbConfig = config.mariadb;
     const partitionManager = new PartitionManager(dbConfig);
     
     try {
@@ -129,13 +114,7 @@ async function addPartition(dbType, year, week) {
         
         console.log(`${year}년 ${week}주 파티션 추가 중...`);
         
-        let result;
-        if (dbType === 'mariadb') {
-            result = await partitionManager.addWeeklyPartitionMariaDB(parseInt(year), parseInt(week));
-        } else {
-            const targetDate = new Date(year, 0, 1 + (parseInt(week) - 1) * 7);
-            result = await partitionManager.addWeeklyPartitionPostgreSQL(targetDate.toISOString().split('T')[0]);
-        }
+        const result = await partitionManager.addWeeklyPartition(parseInt(year), parseInt(week));
         
         if (result.success) {
             console.log('✅ 파티션 추가 완료');
@@ -152,9 +131,9 @@ async function addPartition(dbType, year, week) {
 }
 
 // 오래된 파티션 정리
-async function cleanupPartitions(dbType, keepWeeks) {
+async function cleanupPartitions(keepWeeks) {
     const config = loadConfig();
-    const dbConfig = config[dbType];
+    const dbConfig = config.mariadb;
     const partitionManager = new PartitionManager(dbConfig);
     
     try {
@@ -162,12 +141,7 @@ async function cleanupPartitions(dbType, keepWeeks) {
         
         console.log(`${keepWeeks}주 이전 파티션 정리 중...`);
         
-        let result;
-        if (dbType === 'mariadb') {
-            result = await partitionManager.dropOldPartitionsMariaDB(keepWeeks);
-        } else {
-            result = await partitionManager.dropOldPartitionsPostgreSQL(keepWeeks);
-        }
+        const result = await partitionManager.dropOldPartitions(keepWeeks);
         
         if (result.success) {
             console.log('✅ 파티션 정리 완료');
@@ -184,9 +158,9 @@ async function cleanupPartitions(dbType, keepWeeks) {
 }
 
 // 파티션 정보 조회
-async function showPartitionInfo(dbType) {
+async function showPartitionInfo() {
     const config = loadConfig();
-    const dbConfig = config[dbType];
+    const dbConfig = config.mariadb;
     const partitionManager = new PartitionManager(dbConfig);
     
     try {
@@ -194,27 +168,19 @@ async function showPartitionInfo(dbType) {
         
         console.log('파티션 정보 조회 중...');
         
-        let result;
-        if (dbType === 'mariadb') {
-            result = await partitionManager.getPartitionInfoMariaDB();
-        } else {
-            result = await partitionManager.getPartitionInfoPostgreSQL();
-        }
+        const result = await partitionManager.getPartitionInfo();
         
         if (result.success) {
-            console.log('📊 파티션 정보:');
-            console.log(`총 ${result.partitions.length}개 파티션\n`);
+            console.log('✅ 파티션 정보 조회 완료');
+            console.log(`📊 총 ${result.partitions.length}개 파티션`);
             
             if (result.partitions.length > 0) {
-                console.log('파티션명\t\t\t행 수\t\t크기');
-                console.log('─'.repeat(60));
-                
+                console.log('\n파티션 목록:');
                 result.partitions.forEach(partition => {
                     const name = partition.PARTITION_NAME || partition.partition_name;
-                    const rows = partition.TABLE_ROWS || partition.row_count || 'N/A';
-                    const size = partition.DATA_LENGTH || 'N/A';
-                    
-                    console.log(`${name}\t\t${rows}\t\t${size}`);
+                    const rows = partition.TABLE_ROWS || partition.table_rows || 0;
+                    const dataLength = partition.DATA_LENGTH || partition.data_length || 0;
+                    console.log(`  - ${name}: ${rows}행, ${(dataLength / 1024 / 1024).toFixed(2)}MB`);
                 });
             }
         } else {
@@ -230,34 +196,35 @@ async function showPartitionInfo(dbType) {
 }
 
 // 파티션 상태 체크 및 복구
-async function checkAndRepairPartitions(dbType) {
+async function checkAndRepairPartitions() {
     const config = loadConfig();
-    const dbConfig = config[dbType];
+    const dbConfig = config.mariadb;
     const partitionManager = new PartitionManager(dbConfig);
     
     try {
         await partitionManager.connect();
         
         console.log('파티션 상태 체크 및 복구 중...');
+        
         const result = await partitionManager.checkAndRepairPartitions();
         
         if (result.success) {
-            console.log('✅ 파티션 상태 체크 완료');
+            console.log('✅ 파티션 상태 체크 및 복구 완료');
             console.log(`📊 총 ${result.partitions.length}개 파티션`);
             
-            if (result.cleanup.success) {
-                console.log('🧹 오래된 파티션 정리 완료');
+            if (result.cleanup && result.cleanup.success) {
+                console.log('✅ 오래된 파티션 정리 완료');
             }
             
-            if (result.added.success) {
-                console.log('➕ 새 파티션 추가 완료');
+            if (result.added && result.added.success) {
+                console.log('✅ 다음 주 파티션 추가 완료');
             }
         } else {
-            console.error('❌ 파티션 상태 체크 실패:', result.error);
+            console.error('❌ 파티션 상태 체크 및 복구 실패:', result.error);
             process.exit(1);
         }
     } catch (error) {
-        console.error('❌ 파티션 상태 체크 중 오류 발생:', error.message);
+        console.error('❌ 파티션 상태 체크 및 복구 중 오류 발생:', error.message);
         process.exit(1);
     } finally {
         await partitionManager.disconnect();
@@ -267,76 +234,56 @@ async function checkAndRepairPartitions(dbType) {
 // 메인 함수
 async function main() {
     const args = process.argv.slice(2);
-    const command = args[0];
     
-    if (!command || command === '--help' || command === '-h') {
+    if (args.length === 0 || args.includes('--help')) {
         showHelp();
         return;
     }
     
-    // 데이터베이스 타입 결정
-    let dbType = 'mariadb'; // 기본값
-    const dbTypeIndex = args.indexOf('--db-type');
-    if (dbTypeIndex !== -1 && args[dbTypeIndex + 1]) {
-        dbType = args[dbTypeIndex + 1];
-    }
-    
-    if (!['mariadb', 'postgresql'].includes(dbType)) {
-        console.error('지원하는 데이터베이스 타입: mariadb, postgresql');
-        process.exit(1);
-    }
+    const command = args[0];
     
     try {
         switch (command) {
             case 'init':
-                await initPartitions(dbType);
+                await initPartitions();
                 break;
                 
             case 'add':
-                const year = args[1];
-                const week = args[2];
-                if (!year || !week) {
-                    console.error('사용법: add [year] [week]');
+                if (args.length < 3) {
+                    console.error('❌ 연도와 주를 지정해주세요.');
+                    console.error('예시: node scripts/manage-partitions.js add 2025 1');
                     process.exit(1);
                 }
-                await addPartition(dbType, year, week);
+                await addPartition(args[1], args[2]);
                 break;
                 
             case 'cleanup':
-                const keepWeeks = parseInt(args[1]) || 1;
-                await cleanupPartitions(dbType, keepWeeks);
+                const keepWeeks = args[1] ? parseInt(args[1]) : 1;
+                await cleanupPartitions(keepWeeks);
                 break;
                 
             case 'info':
-                await showPartitionInfo(dbType);
+                await showPartitionInfo();
                 break;
                 
             case 'check':
-                await checkAndRepairPartitions(dbType);
-                break;
-                
-            case 'schedule':
-                console.log('스케줄러 기능은 별도로 구현이 필요합니다.');
-                console.log('서버 애플리케이션에서 PartitionScheduler를 사용하세요.');
+                await checkAndRepairPartitions();
                 break;
                 
             default:
-                console.error(`알 수 없는 명령어: ${command}`);
+                console.error(`❌ 알 수 없는 명령어: ${command}`);
                 showHelp();
                 process.exit(1);
         }
     } catch (error) {
-        console.error('❌ 오류 발생:', error.message);
+        console.error('❌ 실행 중 오류 발생:', error.message);
         process.exit(1);
     }
 }
 
 // 스크립트 실행
 if (require.main === module) {
-    main().catch(error => {
-        console.error('❌ 치명적 오류:', error);
-        process.exit(1);
-    });
+    main();
 }
 
 module.exports = {

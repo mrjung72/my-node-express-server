@@ -1,5 +1,4 @@
 const mysql = require('mysql2/promise');
-const { Pool } = require('pg');
 
 /**
  * 데이터베이스 파티션 관리 유틸리티
@@ -9,7 +8,6 @@ class PartitionManager {
     constructor(config) {
         this.config = config;
         this.connection = null;
-        this.dbType = config.dbType || 'mariadb'; // 'mariadb' or 'postgresql'
     }
 
     /**
@@ -17,12 +15,8 @@ class PartitionManager {
      */
     async connect() {
         try {
-            if (this.dbType === 'mariadb') {
-                this.connection = await mysql.createConnection(this.config);
-            } else if (this.dbType === 'postgresql') {
-                this.connection = new Pool(this.config);
-            }
-            console.log(`Connected to ${this.dbType} database`);
+            this.connection = await mysql.createConnection(this.config);
+            console.log('Connected to MariaDB database');
         } catch (error) {
             console.error('Database connection failed:', error);
             throw error;
@@ -35,11 +29,7 @@ class PartitionManager {
     async disconnect() {
         try {
             if (this.connection) {
-                if (this.dbType === 'mariadb') {
-                    await this.connection.end();
-                } else if (this.dbType === 'postgresql') {
-                    await this.connection.end();
-                }
+                await this.connection.end();
                 console.log('Database connection closed');
             }
         } catch (error) {
@@ -48,9 +38,9 @@ class PartitionManager {
     }
 
     /**
-     * 주간 파티션 추가 (MariaDB)
+     * 주간 파티션 추가
      */
-    async addWeeklyPartitionMariaDB(year, week) {
+    async addWeeklyPartition(year, week) {
         try {
             const partitionName = `p${year}${week.toString().padStart(2, '0')}`;
             const partitionValue = year * 100 + week;
@@ -72,24 +62,9 @@ class PartitionManager {
     }
 
     /**
-     * 주간 파티션 추가 (PostgreSQL)
+     * 오래된 파티션 삭제
      */
-    async addWeeklyPartitionPostgreSQL(targetDate) {
-        try {
-            const sql = `SELECT create_weekly_partition($1)`;
-            const result = await this.connection.query(sql, [targetDate]);
-            console.log('Partition created:', result.rows[0]);
-            return { success: true, result: result.rows[0] };
-        } catch (error) {
-            console.error('Error adding partition:', error);
-            return { success: false, error: error.message };
-        }
-    }
-
-    /**
-     * 오래된 파티션 삭제 (MariaDB)
-     */
-    async dropOldPartitionsMariaDB(keepWeeks = 1) {
+    async dropOldPartitions(keepWeeks = 1) {
         try {
             const sql = `CALL DropOldPartitions(${keepWeeks})`;
             await this.connection.execute(sql);
@@ -102,24 +77,9 @@ class PartitionManager {
     }
 
     /**
-     * 오래된 파티션 삭제 (PostgreSQL)
+     * 파티션 정보 조회
      */
-    async dropOldPartitionsPostgreSQL(keepWeeks = 1) {
-        try {
-            const sql = `SELECT drop_old_partitions($1)`;
-            const result = await this.connection.query(sql, [keepWeeks]);
-            console.log('Old partitions dropped:', result.rows[0]);
-            return { success: true, result: result.rows[0] };
-        } catch (error) {
-            console.error('Error dropping old partitions:', error);
-            return { success: false, error: error.message };
-        }
-    }
-
-    /**
-     * 파티션 정보 조회 (MariaDB)
-     */
-    async getPartitionInfoMariaDB() {
+    async getPartitionInfo() {
         try {
             const sql = `
                 SELECT 
@@ -143,20 +103,6 @@ class PartitionManager {
     }
 
     /**
-     * 파티션 정보 조회 (PostgreSQL)
-     */
-    async getPartitionInfoPostgreSQL() {
-        try {
-            const sql = `SELECT * FROM get_partition_info()`;
-            const result = await this.connection.query(sql);
-            return { success: true, partitions: result.rows };
-        } catch (error) {
-            console.error('Error getting partition info:', error);
-            return { success: false, error: error.message };
-        }
-    }
-
-    /**
      * 자동 파티션 관리 (다음 주 파티션 추가)
      */
     async autoManagePartitions() {
@@ -164,13 +110,9 @@ class PartitionManager {
             const now = new Date();
             const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
             
-            if (this.dbType === 'mariadb') {
-                const year = nextWeek.getFullYear();
-                const week = this.getWeekNumber(nextWeek);
-                return await this.addWeeklyPartitionMariaDB(year, week);
-            } else if (this.dbType === 'postgresql') {
-                return await this.addWeeklyPartitionPostgreSQL(nextWeek.toISOString().split('T')[0]);
-            }
+            const year = nextWeek.getFullYear();
+            const week = this.getWeekNumber(nextWeek);
+            return await this.addWeeklyPartition(year, week);
         } catch (error) {
             console.error('Error in auto partition management:', error);
             return { success: false, error: error.message };
@@ -196,9 +138,7 @@ class PartitionManager {
             console.log('Checking partition status...');
             
             // 파티션 정보 조회
-            const partitionInfo = this.dbType === 'mariadb' 
-                ? await this.getPartitionInfoMariaDB()
-                : await this.getPartitionInfoPostgreSQL();
+            const partitionInfo = await this.getPartitionInfo();
 
             if (!partitionInfo.success) {
                 throw new Error('Failed to get partition info');
@@ -207,9 +147,7 @@ class PartitionManager {
             console.log(`Found ${partitionInfo.partitions.length} partitions`);
 
             // 오래된 파티션 정리
-            const cleanupResult = this.dbType === 'mariadb'
-                ? await this.dropOldPartitionsMariaDB(1)
-                : await this.dropOldPartitionsPostgreSQL(1);
+            const cleanupResult = await this.dropOldPartitions(1);
 
             if (!cleanupResult.success) {
                 console.warn('Failed to cleanup old partitions:', cleanupResult.error);
@@ -277,11 +215,7 @@ class PartitionScheduler {
             try {
                 await this.partitionManager.connect();
                 
-                if (this.partitionManager.dbType === 'mariadb') {
-                    await this.partitionManager.dropOldPartitionsMariaDB(52);
-                } else {
-                    await this.partitionManager.dropOldPartitionsPostgreSQL(1);
-                }
+                await this.partitionManager.dropOldPartitions(1);
             } catch (error) {
                 console.error('Daily partition cleanup failed:', error);
             } finally {
@@ -314,18 +248,7 @@ const mariadbConfig = {
     host: 'localhost',
     user: 'username',
     password: 'password',
-    database: 'database_name',
-    dbType: 'mariadb'
-};
-
-// PostgreSQL 설정
-const postgresConfig = {
-    host: 'localhost',
-    user: 'username',
-    password: 'password',
-    database: 'database_name',
-    port: 5432,
-    dbType: 'postgresql'
+    database: 'database_name'
 };
 
 async function main() {
