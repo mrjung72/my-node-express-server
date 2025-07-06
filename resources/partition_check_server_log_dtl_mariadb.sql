@@ -18,6 +18,7 @@ CREATE TABLE check_server_log_dtl (
   server_ip varchar(20) NOT NULL,
   port nvarchar(4) NOT NULL,
   db_name varchar(100) DEFAULT NULL,   
+  db_userid varchar(50) DEFAULT NULL,   -- DB 사용자 ID
   result_code varchar(10) NOT NULL,    -- [1,0]
   error_code varchar(20) DEFAULT NULL,         
   error_msg varchar(1000) DEFAULT NULL,  
@@ -28,7 +29,8 @@ CREATE TABLE check_server_log_dtl (
   INDEX ix_check_server_log_dtl_02 (server_ip),
   INDEX ix_check_server_log_dtl_03 (db_name),
   INDEX ix_check_server_log_dtl_04 (error_code),
-  INDEX ix_check_server_log_dtl_05 (createdAt)
+  INDEX ix_check_server_log_dtl_05 (createdAt),
+  INDEX ix_check_server_log_dtl_06 (db_userid)
   ) 
   PARTITION BY RANGE (YEARWEEK(createdAt, 1)) (
     -- 현재 주 파티션 (자동 생성됨)
