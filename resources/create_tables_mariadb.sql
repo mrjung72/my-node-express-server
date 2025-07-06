@@ -2,8 +2,7 @@
  * 사이트에서 사용되는 DB테이블을 정의한다.
  *---------------------------------------------------------*/
 
-
-# members 테이블 스키마 생성
+-- # members 테이블 스키마 생성
 drop table if exists  members;
 CREATE TABLE members (
   userid varchar(20) NOT NULL,
@@ -27,7 +26,7 @@ CREATE TABLE members (
 );
 
 
-# login_his 테이블 스키마 생성
+-- # login_his 테이블 스키마 생성
 drop table if exists  login_his;
 CREATE TABLE login_his (
   id int(11) NOT NULL AUTO_INCREMENT,
@@ -40,7 +39,7 @@ CREATE TABLE login_his (
 );
 
 
-# csv_upload_his 테이블 스키마 생성
+-- # csv_upload_his 테이블 스키마 생성 
 drop table if exists  csv_upload_his;
 CREATE TABLE csv_upload_his (
   id int(11) NOT NULL AUTO_INCREMENT,
@@ -57,7 +56,7 @@ CREATE TABLE csv_upload_his (
 
 
 
-# servers_temp 테이블 정의
+-- # servers_temp 테이블 정의
 drop table if exists  servers_temp;
 CREATE TABLE servers_temp (
   env_type varchar(10) NOT NULL,   -- 환경구분 (prod/qas/dev)
@@ -81,7 +80,7 @@ CREATE TABLE servers_temp (
 );
 
 
-# 법인별/공정 테이블 정의
+-- # 법인별/공정 테이블 정의
 drop table if exists  corp_proc_define;
 CREATE TABLE corp_proc_define (
   corp_proc_id int(11) NOT NULL AUTO_INCREMENT,
@@ -102,7 +101,7 @@ CREATE TABLE corp_proc_define (
 );
 
 
-# servers 테이블 정의
+-- # servers 테이블 정의
 drop table if exists  servers;
 CREATE TABLE servers (
   server_ip varchar(20) NOT NULL,
@@ -118,7 +117,7 @@ CREATE TABLE servers (
   INDEX ix_servers_01 (corp_id, env_type, role_type)
 );
 
-# servers_port 테이블 정의
+-- # servers_port 테이블 정의
 drop table if exists  servers_port;
 CREATE TABLE servers_port (
   server_port_id int(11) NOT NULL AUTO_INCREMENT,
@@ -140,7 +139,7 @@ CREATE TABLE servers_port (
 
 
 
-# DB인스턴스정의 테이블
+-- # DB인스턴스정의 테이블
 drop table if exists  database_instances;
 CREATE TABLE database_instances (
   db_instance_id int(11) NOT NULL AUTO_INCREMENT,
@@ -161,7 +160,7 @@ CREATE TABLE database_instances (
 
 
 
-# 게시판 테이블
+-- # 게시판 테이블
 drop table if exists boards;
 CREATE TABLE boards (
   board_id int(11) NOT NULL AUTO_INCREMENT,
@@ -176,7 +175,7 @@ CREATE TABLE boards (
 );
 
 
-# 게시판 댓글 테이블 
+-- # 게시판 댓글 테이블 
 drop table if exists board_replies;
 CREATE TABLE board_replies (
   reply_id      INT AUTO_INCREMENT PRIMARY KEY,   -- 답글 고유 ID
@@ -191,10 +190,10 @@ CREATE TABLE board_replies (
 );
 
 
-# 원격 DB서버 접속 로그 테이블
+-- # 원격 DB서버 접속 로그 테이블
 drop table if exists  check_server_log_master;
 CREATE TABLE check_server_log_master (
-  check_unit_id varchar(20) NOT NULL  primary key,
+  check_unit_id int(11) NOT NULL auto_increment primary key,
   yyyymmdd varchar(8) NOT NULL,   -- 체크 일자
   hhmmss varchar(6) NOT NULL,   -- 체크 시간
   pc_ip varchar(20) NOT NULL,   
@@ -204,28 +203,28 @@ CREATE TABLE check_server_log_master (
   INDEX ix_check_server_log_master_02 (pc_ip, check_method, check_unit_id)
 );
 
-# 원격 DB서버 접속 로그 상세 테이블
+-- # 원격 DB서버 접속 로그 상세 테이블
 drop table if exists  check_server_log_dtl;
 CREATE TABLE check_server_log_dtl (
-  id int(11) NOT NULL auto_increment primary key,
-  check_unit_id varchar(20) NOT NULL,
+  check_unit_id int(11) NOT NULL,
   server_ip varchar(20) NOT NULL,
-  port nvarchar(4) NOT NULL,
+  port varchar(4) NOT NULL,
   dbname varchar(100) DEFAULT NULL,   
   result_code varchar(10) NOT NULL,    -- [1,0]
   error_code varchar(20) DEFAULT NULL,         
   error_msg varchar(1000) DEFAULT NULL,  
   collapsed_time int(4) DEFAULT 0, 
   createdAt timestamp DEFAULT current_timestamp(),
-  INDEX ix_check_server_log_dtl_01 (check_unit_id),
+  PRIMARY KEY (check_unit_id, createdAt),
+  UNIQUE KEY uk_check_server_log_dtl_01 (check_unit_id, server_ip, port),
+  INDEX ix_check_server_log_dtl_01 (dbname, check_unit_id),
   INDEX ix_check_server_log_dtl_02 (server_ip),
-  INDEX ix_check_server_log_dtl_03 (dbname),
-  INDEX ix_check_server_log_dtl_04 (error_code)
+  INDEX ix_check_server_log_dtl_03 (error_code),
+  INDEX ix_check_server_log_dtl_04 (createdAt)
 );
 
 
-
-# 공통코드 테이블
+-- # 공통코드 테이블
 drop table if exists  common_codes;
 CREATE TABLE common_codes (
   group_code varchar(50) NOT NULL,

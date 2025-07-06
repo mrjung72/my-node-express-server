@@ -2,30 +2,26 @@ const express = require('express');
 const router = express.Router();
 const mypool = require('../db');
 
-// DB접속 체크 결과 기록 API 
-router.post('/db', async (req, res) => {
+// 체크 이력 master 기록 API 
+router.post('/master', async (req, res) => {
 
   const {
-    check_unit_id, 
-    server_ip,
-    port,
-    dbname,
-    pc_ip,
-    result_code,
-    error_code,
-    error_msg,
-    collapsed_time
+    check_method,
+    pc_ip
   } = req.body;
 
-  if (!server_ip || !port || !dbname || !pc_ip) {
+  if (!check_method || !pc_ip) {
     return res.status(400).json({ error: '필수값 누락' });
   }
+
+  const yyyymmdd = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+  const hhmmss = new Date().toISOString().slice(11, 16).replace(/:/g, '');
 
   try {
     const conn = await mypool.getConnection();
     const [result] = await conn.execute(
-      'INSERT INTO check_server_log (check_unit_id, check_method, server_ip, port, dbname, pc_ip, result_code, error_code, error_msg, collapsed_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [check_unit_id, 'DB_CONN', server_ip, port, dbname, pc_ip, result_code, error_code, error_msg, collapsed_time]
+      'INSERT INTO check_server_log_master (yyyymmdd, hhmmss, check_method, pc_ip) VALUES (?, ?, ?, ?)',
+      [yyyymmdd, hhmmss, check_method, pc_ip]
     );
     conn.release();
     res.json({ success: true, insertId: result.insertId });
@@ -35,32 +31,64 @@ router.post('/db', async (req, res) => {
   }
 });
 
-// Telnet 접속 체크 결과 기록 API 
-router.post('/telnet', async (req, res) => {
+
+// DB접속 체크 결과 상세 기록 API 
+router.post('/db-dtl', async (req, res) => {
 
   const {
     check_unit_id, 
     server_ip,
     port,
-    pc_ip,
+    dbname,
     result_code,
     error_code,
     error_msg,
     collapsed_time
   } = req.body;
 
-  if (!server_ip || !port || !pc_ip) {
+  if (!server_ip || !port || !dbname ) {
     return res.status(400).json({ error: '필수값 누락' });
   }
 
   try {
     const conn = await mypool.getConnection();
     const [result] = await conn.execute(
-      'INSERT INTO check_server_log (check_unit_id, check_method, server_ip, port, pc_ip, result_code, error_code, error_msg, collapsed_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [check_unit_id, 'TELNET', server_ip, port, pc_ip, result_code, error_code, error_msg, collapsed_time]
+      'INSERT INTO check_server_log_dtl (check_unit_id, server_ip, port, dbname, result_code, error_code, error_msg, collapsed_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [check_unit_id, server_ip, port, dbname, result_code, error_code, error_msg, collapsed_time]
     );
     conn.release();
-    res.json({ success: true, insertId: result.insertId });
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Telnet 접속 체크 결과 상세 기록 API 
+router.post('/telnet-dtl', async (req, res) => {
+
+  const {
+    check_unit_id, 
+    server_ip,
+    port,
+    result_code,
+    error_code,
+    error_msg,
+    collapsed_time
+  } = req.body;
+
+  if (!server_ip || !port ) {
+    return res.status(400).json({ error: '필수값 누락' });
+  }
+
+  try {
+    const conn = await mypool.getConnection();
+    const [result] = await conn.execute(
+      'INSERT INTO check_server_log_dtl (check_unit_id, server_ip, port, result_code, error_code, error_msg, collapsed_time) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [check_unit_id, server_ip, port, result_code, error_code, error_msg, collapsed_time]
+    );
+    conn.release();
+    res.json({ success: true });
   } catch (err) {
     console.error(err)
     res.status(500).json({ error: err.message });
