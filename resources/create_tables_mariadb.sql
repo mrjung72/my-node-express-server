@@ -209,7 +209,7 @@ CREATE TABLE check_server_log_dtl (
   check_unit_id int(11) NOT NULL,
   server_ip varchar(20) NOT NULL,
   port varchar(4) NOT NULL,
-  dbname varchar(100) DEFAULT NULL,   
+  db_name varchar(100) DEFAULT NULL,   
   result_code varchar(10) NOT NULL,    -- [1,0]
   error_code varchar(20) DEFAULT NULL,         
   error_msg varchar(1000) DEFAULT NULL,  
@@ -217,7 +217,7 @@ CREATE TABLE check_server_log_dtl (
   createdAt timestamp DEFAULT current_timestamp(),
   PRIMARY KEY (check_unit_id, createdAt),
   UNIQUE KEY uk_check_server_log_dtl_01 (check_unit_id, server_ip, port),
-  INDEX ix_check_server_log_dtl_01 (dbname, check_unit_id),
+  INDEX ix_check_server_log_dtl_01 (db_name, check_unit_id),
   INDEX ix_check_server_log_dtl_02 (server_ip),
   INDEX ix_check_server_log_dtl_03 (error_code),
   INDEX ix_check_server_log_dtl_04 (createdAt)

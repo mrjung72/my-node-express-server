@@ -17,7 +17,7 @@ CREATE TABLE check_server_log_dtl (
   check_unit_id varchar(20) NOT NULL,
   server_ip varchar(20) NOT NULL,
   port varchar(4) NOT NULL,
-  dbname varchar(100) DEFAULT NULL,   
+  db_name varchar(100) DEFAULT NULL,   
   result_code varchar(10) NOT NULL,    -- [1,0]
   error_code varchar(20) DEFAULT NULL,         
   error_msg varchar(1000) DEFAULT NULL,  
@@ -28,7 +28,7 @@ CREATE TABLE check_server_log_dtl (
 -- 5. 인덱스 생성 (파티션별로 자동 생성됨)
 CREATE INDEX ix_check_server_log_dtl_01 ON check_server_log_dtl (check_unit_id);
 CREATE INDEX ix_check_server_log_dtl_02 ON check_server_log_dtl (server_ip);
-CREATE INDEX ix_check_server_log_dtl_03 ON check_server_log_dtl (dbname);
+CREATE INDEX ix_check_server_log_dtl_03 ON check_server_log_dtl (db_name);
 CREATE INDEX ix_check_server_log_dtl_04 ON check_server_log_dtl (error_code);
 CREATE INDEX ix_check_server_log_dtl_05 ON check_server_log_dtl (createdAt);
 
