@@ -15,7 +15,11 @@ class PartitionManager {
      */
     async connect() {
         try {
-            this.connection = await mysql.createConnection(this.config);
+            this.connection = await mysql.createConnection({
+                ...this.config,
+                charset: 'utf8mb4',
+                collation: 'utf8mb4_unicode_ci'
+            });
             console.log('Connected to MariaDB database');
         } catch (error) {
             console.error('Database connection failed:', error);

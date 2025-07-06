@@ -2,6 +2,13 @@
  * 사이트에서 사용되는 DB테이블을 정의한다.
  *---------------------------------------------------------*/
 
+-- 한글 인코딩 설정
+SET NAMES utf8mb4;
+SET CHARACTER SET utf8mb4;
+SET character_set_connection=utf8mb4;
+SET character_set_client=utf8mb4;
+SET character_set_results=utf8mb4;
+
 -- # members 테이블 스키마 생성
 drop table if exists  members;
 CREATE TABLE members (
@@ -23,7 +30,7 @@ CREATE TABLE members (
   INDEX ix_members_02 (user_pc_ip),
   INDEX ix_members_03 (reg_pc_ip),
   INDEX ix_members_04 (reg_userid)
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
 -- # login_his 테이블 스키마 생성
@@ -36,7 +43,7 @@ CREATE TABLE login_his (
   PRIMARY KEY (id),
   INDEX ix_login_his_01 (userid),
   INDEX ix_login_his_02 (user_pc_ip)
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
 -- # csv_upload_his 테이블 스키마 생성 
@@ -52,7 +59,7 @@ CREATE TABLE csv_upload_his (
   PRIMARY KEY (id),
   INDEX ix_csv_upload_his_01 (userid),
   INDEX ix_csv_upload_his_02 (user_pc_ip)
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
 
@@ -77,7 +84,7 @@ CREATE TABLE servers_temp (
   reg_pc_ip varchar(20) NULL,   -- 등록자 PC 아이피
   reg_userid varchar(20) NULL,   -- 등록자ID
   PRIMARY KEY (server_ip, port, corp_id, group_id, proc_id)
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
 -- # 법인별/공정 테이블 정의
@@ -98,7 +105,7 @@ CREATE TABLE corp_proc_define (
   INDEX ix_corp_proc_define_01 (proc_name),
   INDEX ix_corp_proc_define_02 (corp_id, proc_name),
   INDEX ix_corp_proc_define_03 (db_instance_name)
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
 -- # servers 테이블 정의
@@ -115,7 +122,7 @@ CREATE TABLE servers (
   closedAt timestamp NULL,
   PRIMARY KEY (server_ip),
   INDEX ix_servers_01 (corp_id, env_type, role_type)
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- # servers_port 테이블 정의
 drop table if exists  servers_port;
@@ -135,7 +142,7 @@ CREATE TABLE servers_port (
   PRIMARY KEY (server_port_id),
   UNIQUE KEY uk_servers_port_01 (server_ip, port),
   INDEX ix_servers_port_01 (proc_id, usage_type)
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
 
@@ -156,7 +163,7 @@ CREATE TABLE database_instances (
   lastCheckedAt timestamp NULL ,
   PRIMARY KEY (db_instance_id),
   INDEX ix_database_instances_01 (db_instance_name, server_port_id)
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
 
@@ -170,7 +177,7 @@ CREATE TABLE boards (
   createdAt timestamp DEFAULT current_timestamp(),
   PRIMARY KEY (board_id),
   INDEX ix_boards_01 (title)
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- # 게시판 첨부파일 테이블
 drop table if exists board_files;
@@ -186,8 +193,8 @@ CREATE TABLE board_files (
   PRIMARY KEY (file_id),
   INDEX ix_board_files_01 (board_id),
   INDEX ix_board_files_02 (filename),
-  FOREIGN KEY (board_id) REFERENCES boards(board_id) ON DELETE CASCADE
-);
+  -- FOREIGN KEY (board_id) REFERENCES boards(board_id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
 -- # 게시판 댓글 테이블 
@@ -202,7 +209,7 @@ CREATE TABLE board_replies (
   updatedAt     TIMESTAMP NULL DEFAULT NULL,
   INDEX ix_board_replies_01 (board_id),
   INDEX ix_board_replies_02 (parent_id)
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
 -- # 원격 DB서버 접속 로그 테이블
@@ -216,7 +223,7 @@ CREATE TABLE check_server_log_master (
   createdAt timestamp DEFAULT current_timestamp(),
   INDEX ix_check_server_log_master_01 (yyyymmdd, hhmmss),
   INDEX ix_check_server_log_master_02 (pc_ip, check_method, check_unit_id)
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- # 원격 DB서버 접속 로그 상세 테이블
 drop table if exists  check_server_log_dtl;
@@ -238,7 +245,7 @@ CREATE TABLE check_server_log_dtl (
   INDEX ix_check_server_log_dtl_03 (error_code),
   INDEX ix_check_server_log_dtl_04 (createdAt),
   INDEX ix_check_server_log_dtl_05 (db_userid)
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
 -- # 공통코드 테이블
@@ -251,7 +258,7 @@ CREATE TABLE common_codes (
   category varchar(50) NULL,
   attributes varchar(4000) NULL,  -- 속성값 json타입 ex. {속성ID:속성값, ...}
   PRIMARY KEY (group_code, code)
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 insert into common_codes (group_code, code, label) 
 values

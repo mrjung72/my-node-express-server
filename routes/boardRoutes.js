@@ -10,11 +10,48 @@ const { authenticateJWT, requireAdmin } = require('../middlewares/auth')
 const router = express.Router();
 
 const uploadDir = path.join(__dirname, '../uploads/board');
+
+// 업로드 디렉토리 생성
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// multer 설정 개선 - 한글 파일명 지원
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, uploadDir);
+  },
+  filename: function (req, file, cb) {
+    // 원본 파일명에서 확장자 추출
+    const ext = path.extname(file.originalname);
+    // 고유한 파일명 생성 (타임스탬프 + 랜덤)
+    const uniqueName = Date.now() + '_' + Math.random().toString(36).substring(2) + ext;
+    cb(null, uniqueName);
+  }
+});
+
 const upload = multer({ 
-  dest: uploadDir,
+  storage: storage,
   limits: {
     fileSize: 10 * 1024 * 1024, // 10MB 제한
     files: 5 // 최대 5개 파일
+  },
+  fileFilter: function (req, file, cb) {
+    // 파일 타입 검증
+    const allowedTypes = [
+      'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+      'application/pdf', 'application/msword', 
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'text/plain', 'text/csv'
+    ];
+    
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('지원하지 않는 파일 형식입니다.'), false);
+    }
   }
 });
 
@@ -52,11 +89,13 @@ router.post('/', authenticateJWT, upload.array('files', 5), async (req, res) => 
     if (req.files && req.files.length > 0) {
       for (let i = 0; i < req.files.length; i++) {
         const file = req.files[i];
+        // 한글 파일명을 UTF-8로 정규화
+        const originalName = Buffer.from(file.originalname, 'latin1').toString('utf8');
         const fileSql = 'INSERT INTO board_files (board_id, filename, origin_filename, file_size, file_type, upload_order) VALUES (?, ?, ?, ?, ?, ?)'
         await conn.query(fileSql, [
           boardId, 
           file.filename, 
-          file.originalname, 
+          originalName, 
           file.size, 
           file.mimetype, 
           i + 1
@@ -87,16 +126,31 @@ router.get('/download/:file_id', async (req, res) => {
   // 실제 파일 경로
   const filename = path.join(__dirname, '../uploads/board', file.filename);
 
+  if (!fs.existsSync(filename)) {
+    return res.status(404).send('File not found on disk');
+  }
+
   let origin_filename = file.origin_filename || file.filename;
 
-  // 브라우저별 한글 파일명 처리
+  // 브라우저별 한글 파일명 처리 개선
   const userAgent = req.headers['user-agent'] || '';
-  let encodedName = encodeURIComponent(origin_filename);
-  let disposition = `attachment; filename*=UTF-8''${encodedName}`;
+  
+  // Content-Type 설정
+  res.setHeader('Content-Type', file.file_type || 'application/octet-stream');
+  
+  // 한글 파일명 인코딩 처리
+  let disposition;
   if (/MSIE|Trident/.test(userAgent)) {
-    // IE
+    // IE - EUC-KR 인코딩
     disposition = 'attachment; filename=' + iconv.encode(origin_filename, 'euc-kr').toString('binary');
+  } else if (/Chrome/.test(userAgent)) {
+    // Chrome - UTF-8 인코딩
+    disposition = `attachment; filename*=UTF-8''${encodeURIComponent(origin_filename)}`;
+  } else {
+    // 기타 브라우저 - UTF-8 인코딩
+    disposition = `attachment; filename*=UTF-8''${encodeURIComponent(origin_filename)}`;
   }
+  
   res.setHeader('Content-Disposition', disposition);
   res.sendFile(filename);
 });
@@ -168,11 +222,13 @@ router.put('/:id', authenticateJWT, upload.array('files', 5), async (req, res) =
     
     for (let i = 0; i < req.files.length; i++) {
       const file = req.files[i];
+      // 한글 파일명을 UTF-8로 정규화
+      const originalName = Buffer.from(file.originalname, 'latin1').toString('utf8');
       const fileSql = 'INSERT INTO board_files (board_id, filename, origin_filename, file_size, file_type, upload_order) VALUES (?, ?, ?, ?, ?, ?)'
       await conn.query(fileSql, [
         id, 
         file.filename, 
-        file.originalname, 
+        originalName, 
         file.size, 
         file.mimetype, 
         currentCount + i + 1
