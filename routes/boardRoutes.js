@@ -10,14 +10,21 @@ const { authenticateJWT, requireAdmin } = require('../middlewares/auth')
 const router = express.Router();
 
 const uploadDir = path.join(__dirname, '../uploads/board');
-const upload = multer({ dest: uploadDir });
+const upload = multer({ 
+  dest: uploadDir,
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB 제한
+    files: 5 // 최대 5개 파일
+  }
+});
 
 // 게시글 목록
 router.get('/', async (req, res) => {
     const conn = await mypool.getConnection();
     const [rows] = await conn.query(`
       SELECT b.*, 
-        (SELECT COUNT(*) FROM board_replies r WHERE r.board_id = b.board_id) AS reply_count
+        (SELECT COUNT(*) FROM board_replies r WHERE r.board_id = b.board_id) AS reply_count,
+        (SELECT COUNT(*) FROM board_files f WHERE f.board_id = b.board_id) AS file_count
       FROM boards b
       ORDER BY board_id DESC
     `);
@@ -25,8 +32,8 @@ router.get('/', async (req, res) => {
     res.json(rows);
 });
 
-// 게시글 등록 (파일 첨부 가능, 인증 필요)
-router.post('/', authenticateJWT, upload.single('file'), async (req, res) => {
+// 게시글 등록 (다중 파일 첨부 가능, 인증 필요)
+router.post('/', authenticateJWT, upload.array('files', 5), async (req, res) => {
   const { title, content } = req.body;
   if (!title || !content) {
     return res.status(400).json({ message: '필수 항목 누락' });
@@ -35,10 +42,30 @@ router.post('/', authenticateJWT, upload.single('file'), async (req, res) => {
 
   try {
     const conn = await mypool.getConnection()
-    const sql = 'INSERT INTO boards (title, content, userid, filename, origin_filename) VALUES (?, ?, ?, ?, ?)'
-    const [result] = await conn.query(sql, [title, content, userid, req.file ? req.file.filename : null, req.file ? req.file.originalname : null])
+    
+    // 게시글 등록
+    const sql = 'INSERT INTO boards (title, content, userid) VALUES (?, ?, ?)'
+    const [result] = await conn.query(sql, [title, content, userid])
+    const boardId = result.insertId
+    
+    // 첨부파일 등록
+    if (req.files && req.files.length > 0) {
+      for (let i = 0; i < req.files.length; i++) {
+        const file = req.files[i];
+        const fileSql = 'INSERT INTO board_files (board_id, filename, origin_filename, file_size, file_type, upload_order) VALUES (?, ?, ?, ?, ?, ?)'
+        await conn.query(fileSql, [
+          boardId, 
+          file.filename, 
+          file.originalname, 
+          file.size, 
+          file.mimetype, 
+          i + 1
+        ])
+      }
+    }
+    
     conn.release()
-    res.status(201).json({ userid, title })
+    res.status(201).json({ userid, title, boardId })
   } catch (err) {
     console.error(err)
     res.status(500).send('[ERROR] ' + err.message)
@@ -46,22 +73,21 @@ router.post('/', authenticateJWT, upload.single('file'), async (req, res) => {
 });
 
 // 파일 다운로드 (한글 파일명 지원)
-router.get('/download/:board_id', async (req, res) => {
+router.get('/download/:file_id', async (req, res) => {
 
-  const { board_id } = req.params;
+  const { file_id } = req.params;
   const conn = await mypool.getConnection();
-  const [rows] = await conn.query('SELECT * FROM boards WHERE board_id = ?', [board_id]);
+  const [rows] = await conn.query('SELECT * FROM board_files WHERE file_id = ?', [file_id]);
   conn.release();
 
   if (!rows.length) return res.status(404).send('File not found');
 
-  const post = rows[0];
-  if (!post.filename) return res.status(404).send('No file attached');
+  const file = rows[0];
 
   // 실제 파일 경로
-  const filename = path.join(__dirname, '../uploads/board', post.filename);
+  const filename = path.join(__dirname, '../uploads/board', file.filename);
 
-  let origin_filename = post.origin_filename || post.filename;
+  let origin_filename = file.origin_filename || file.filename;
 
   // 브라우저별 한글 파일명 처리
   const userAgent = req.headers['user-agent'] || '';
@@ -79,16 +105,29 @@ router.get('/download/:board_id', async (req, res) => {
 router.get('/:id', async (req, res) => {
   const { id } = req.params;
   const conn = await mypool.getConnection();
-  const [rows] = await conn.query('SELECT * FROM boards WHERE board_id = ?', [id]);
+  
+  // 게시글 정보 조회
+  const [boardRows] = await conn.query('SELECT * FROM boards WHERE board_id = ?', [id]);
+  if (!boardRows.length) {
+    conn.release();
+    return res.status(404).json({ message: '게시글이 없습니다.' });
+  }
+  
+  // 첨부파일 정보 조회
+  const [fileRows] = await conn.query('SELECT * FROM board_files WHERE board_id = ? ORDER BY upload_order', [id]);
+  
   conn.release();
-  if (!rows.length) return res.status(404).json({ message: '게시글이 없습니다.' });
-  res.json(rows[0]);
+  
+  const post = boardRows[0];
+  post.files = fileRows;
+  
+  res.json(post);
 });
 
 // 게시글 수정
-router.put('/:id', authenticateJWT, upload.single('file'), async (req, res) => {
+router.put('/:id', authenticateJWT, upload.array('files', 5), async (req, res) => {
   const { id } = req.params;
-  const { title, content } = req.body;
+  const { title, content, deleteFiles } = req.body;
   const userid = req.user?.userid;
   if (!title || !content) return res.status(400).json({ message: '필수 항목 누락' });
 
@@ -104,18 +143,43 @@ router.put('/:id', authenticateJWT, upload.single('file'), async (req, res) => {
     return res.status(403).json({ message: '수정 권한이 없습니다.' });
   }
 
-  // 파일 교체 시 기존 파일 삭제
-  let filename = post.filename;
-  let origin_filename = post.origin_filename;
-  if (req.file) {
-    if (filename) {
-      const oldPath = path.join(uploadDir, filename);
-      if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+  // 게시글 내용 수정
+  await conn.query('UPDATE boards SET title=?, content=? WHERE board_id=?', [title, content, id]);
+
+  // 삭제할 파일 처리
+  if (deleteFiles) {
+    const deleteFileIds = JSON.parse(deleteFiles);
+    for (const fileId of deleteFileIds) {
+      const [fileRows] = await conn.query('SELECT * FROM board_files WHERE file_id = ? AND board_id = ?', [fileId, id]);
+      if (fileRows.length > 0) {
+        const file = fileRows[0];
+        const filePath = path.join(uploadDir, file.filename);
+        if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+        await conn.query('DELETE FROM board_files WHERE file_id = ?', [fileId]);
+      }
     }
-    filename = req.file.filename;
-    origin_filename = req.file.originalname;
   }
-  await conn.query('UPDATE boards SET title=?, content=?, filename=?, origin_filename=? WHERE board_id=?', [title, content, filename, origin_filename, id]);
+
+  // 새 파일 추가
+  if (req.files && req.files.length > 0) {
+    // 현재 파일 개수 확인
+    const [currentFiles] = await conn.query('SELECT COUNT(*) as count FROM board_files WHERE board_id = ?', [id]);
+    const currentCount = currentFiles[0].count;
+    
+    for (let i = 0; i < req.files.length; i++) {
+      const file = req.files[i];
+      const fileSql = 'INSERT INTO board_files (board_id, filename, origin_filename, file_size, file_type, upload_order) VALUES (?, ?, ?, ?, ?, ?)'
+      await conn.query(fileSql, [
+        id, 
+        file.filename, 
+        file.originalname, 
+        file.size, 
+        file.mimetype, 
+        currentCount + i + 1
+      ])
+    }
+  }
+
   conn.release();
   res.json({ message: '수정되었습니다.' });
 });
@@ -135,11 +199,14 @@ router.delete('/:id', authenticateJWT, async (req, res) => {
     conn.release();
     return res.status(403).json({ message: '삭제 권한이 없습니다.' });
   }
-  // 파일 삭제
-  if (post.filename) {
-    const filename = path.join(uploadDir, post.filename);
+  
+  // 첨부파일 삭제 (CASCADE로 자동 삭제되지만 파일도 함께 삭제)
+  const [fileRows] = await conn.query('SELECT * FROM board_files WHERE board_id = ?', [id]);
+  for (const file of fileRows) {
+    const filename = path.join(uploadDir, file.filename);
     if (fs.existsSync(filename)) fs.unlinkSync(filename);
   }
+  
   await conn.query('DELETE FROM boards WHERE board_id = ?', [id]);
   conn.release();
   res.json({ message: '삭제되었습니다.' });

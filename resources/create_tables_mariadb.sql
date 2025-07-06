@@ -167,11 +167,26 @@ CREATE TABLE boards (
   title varchar(100) NOT NULL,
   content varchar(4000) NOT NULL,
   userid varchar(20) NOT NULL,
-  filename varchar(400) NULL, 
-  origin_filename varchar(400) NULL, 
   createdAt timestamp DEFAULT current_timestamp(),
   PRIMARY KEY (board_id),
   INDEX ix_boards_01 (title)
+);
+
+-- # 게시판 첨부파일 테이블
+drop table if exists board_files;
+CREATE TABLE board_files (
+  file_id int(11) NOT NULL AUTO_INCREMENT,
+  board_id int(11) NOT NULL,
+  filename varchar(400) NOT NULL,
+  origin_filename varchar(400) NOT NULL,
+  file_size bigint(20) DEFAULT 0,
+  file_type varchar(100) DEFAULT NULL,
+  upload_order int(11) DEFAULT 0,
+  createdAt timestamp DEFAULT current_timestamp(),
+  PRIMARY KEY (file_id),
+  INDEX ix_board_files_01 (board_id),
+  INDEX ix_board_files_02 (filename),
+  FOREIGN KEY (board_id) REFERENCES boards(board_id) ON DELETE CASCADE
 );
 
 
