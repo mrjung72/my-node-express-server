@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const mypool = require('../db');
+const { authenticateJWT } = require('../middlewares/auth')
 
 // 체크 이력 master 기록 API 
 router.post('/master', async (req, res) => {
@@ -97,7 +98,7 @@ router.post('/telnet-dtl', async (req, res) => {
 
 
 // Telnet 접속 체크 이력 조회 API
-router.get('/telent', async (req, res) => {
+router.get('/telnet', authenticateJWT, async (req, res) => {
   try {
     const clientIp = req.ip || req.remoteAddress || req.socket.remoteAddress || 
                     (req.socket ? req.socket.remoteAddress : null) ||
@@ -105,11 +106,12 @@ router.get('/telent', async (req, res) => {
     
     // 실제 클라이언트 IP 추출 (프록시 환경 고려)
     const realClientIp = clientIp.replace(/^::ffff:/, '')
-    
+
     const conn = await mypool.getConnection()
     const query = `
-              select m.yyyymmdd, m.hhmmss, d.server_ip, d.port, d.result_code, d.error_code, d.error_msg,
-                    s.corp_id, s.env_type, s.role_type, p.proc_id, p.proc_detail, p.usage_type
+              select m.check_unit_id, m.yyyymmdd, m.hhmmss, d.server_ip, d.port, d.result_code, d.error_code, d.error_msg,
+                    date_format(d.createdAt, '%Y-%m-%d %T' ) check_datetime,
+                    s.hostname, s.corp_id, s.env_type, s.role_type, p.proc_id, p.proc_detail, p.usage_type
               from check_server_log_master m, check_server_log_dtl d, servers_port p, servers s 
               where m.check_unit_id = d.check_unit_id 
               and d.server_ip = p.server_ip 
@@ -120,12 +122,26 @@ router.get('/telent', async (req, res) => {
               order by m.yyyymmdd desc, m.hhmmss desc
           `
     const [rows] = await conn.query(query, [realClientIp])
+
+    const sqlAggr = `
+              select m.yyyymmdd, GROUP_CONCAT(CONCAT(m.hhmmss) ORDER BY m.hhmmss SEPARATOR ', ') AS hhmmss_list
+              from check_server_log_master m
+              where m.pc_ip = ?
+              and m.check_method = 'TELNET'
+              group by m.yyyymmdd 
+            `
+    const [unitWorkList] = await conn.query(sqlAggr, [realClientIp])
+
+    console.log('unitWorkList:', unitWorkList)
+
     conn.release()
     
     res.json({
       success: true,
-      data: rows,
-      total: rows.length
+      pc_ip: realClientIp,
+      rows: rows,
+      total: rows.length,
+      unitWorkList: unitWorkList
     })
     
   } catch (error) {
