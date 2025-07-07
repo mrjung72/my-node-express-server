@@ -33,8 +33,8 @@ router.post('/master', async (req, res) => {
 });
 
 
-// DB접속 체크 결과 상세 기록 API 
-router.post('/db-dtl', async (req, res) => {
+// DB접속 체크 결과 기록 API 
+router.post('/db', async (req, res) => {
 
   const {
     check_unit_id, 
@@ -66,8 +66,8 @@ router.post('/db-dtl', async (req, res) => {
   }
 });
 
-// Telnet 접속 체크 결과 상세 기록 API 
-router.post('/telnet-dtl', async (req, res) => {
+// Telnet 접속 체크 결과 기록 API 
+router.post('/telnet', async (req, res) => {
 
   const {
     check_unit_id, 
@@ -107,6 +107,7 @@ router.get('/telnet', authenticateJWT, async (req, res) => {
     
     // 실제 클라이언트 IP 추출 (프록시 환경 고려)
     const realClientIp = clientIp.replace(/^::ffff:/, '')
+    console.log('telnet realClientIp:', realClientIp)
 
     const conn = await mypool.getConnection()
     const query = `
@@ -123,6 +124,7 @@ router.get('/telnet', authenticateJWT, async (req, res) => {
               order by m.yyyymmdd desc, m.hhmmss desc
           `
     const [rows] = await conn.query(query, [realClientIp])
+    console.log('telnet rows:', rows)
 
     const sqlAggr = `
               select m.yyyymmdd, GROUP_CONCAT(CONCAT(m.hhmmss) ORDER BY m.hhmmss SEPARATOR ', ') AS hhmmss_list
@@ -192,5 +194,58 @@ router.get('/db', async (req, res) => {
     })
   }
 })
+
+// Telnet 체크일자(yyyymmdd) 목록 반환
+router.get('/dates', authenticateJWT, async (req, res) => {
+  const { check_method } = req.query;
+  try {
+    const clientIp = req.ip || req.remoteAddress || req.socket.remoteAddress || 
+      (req.socket ? req.socket.remoteAddress : null) ||
+      (req.headers['x-forwarded-for'] ? req.headers['x-forwarded-for'].split(',')[0] : null)
+    const realClientIp = clientIp.replace(/^::ffff:/, '')
+    console.log('realClientIp:', realClientIp)
+    const conn = await mypool.getConnection();
+    const [rows] = await conn.query(
+      `SELECT DISTINCT yyyymmdd 
+        FROM check_server_log_master m, check_server_log_dtl d
+        WHERE m.check_unit_id = d.check_unit_id
+        AND m.pc_ip = ? 
+        AND m.check_method = ? 
+        ORDER BY yyyymmdd DESC`,
+      [realClientIp, check_method]
+    );
+    conn.release();
+    res.json(rows.map(r => r.yyyymmdd));
+  } catch (err) {
+    res.status(500).json({ message: 'DB error', error: err.message });
+  }
+});
+
+// Telnet 체크시분초(hhmmss) 목록 반환 (특정 일자)
+router.get('/times', authenticateJWT, async (req, res) => {
+  const { yyyymmdd, check_method } = req.query;
+  if (!yyyymmdd) return res.status(400).json({ message: 'yyyymmdd is required' });
+  try {
+    const clientIp = req.ip || req.remoteAddress || req.socket.remoteAddress || 
+      (req.socket ? req.socket.remoteAddress : null) ||
+      (req.headers['x-forwarded-for'] ? req.headers['x-forwarded-for'].split(',')[0] : null)
+    const realClientIp = clientIp.replace(/^::ffff:/, '')
+    const conn = await mypool.getConnection();
+    const [rows] = await conn.query(
+      `SELECT DISTINCT hhmmss 
+        FROM check_server_log_master m, check_server_log_dtl d
+        WHERE m.check_unit_id = d.check_unit_id
+        AND m.pc_ip = ? 
+        AND m.check_method = ? 
+        AND m.yyyymmdd = ? 
+        ORDER BY hhmmss`,
+      [realClientIp, check_method, yyyymmdd]
+    );
+    conn.release();
+    res.json(rows.map(r => r.hhmmss));
+  } catch (err) {
+    res.status(500).json({ message: 'DB error', error: err.message });
+  }
+});
 
 module.exports = router; 
