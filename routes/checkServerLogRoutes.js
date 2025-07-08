@@ -12,6 +12,8 @@ router.post('/master', async (req, res) => {
   } = req.body;
 
   if (!check_method || !pc_ip) {
+    console.log('------------------- 필수 파라미터(check_method|pc_ip) 값 누락 ----------------------');
+    console.log(req.body);
     return res.status(400).json({ error: '필수값 누락' });
   }
 
@@ -47,8 +49,10 @@ router.post('/db', async (req, res) => {
     error_msg,
     collapsed_time
   } = req.body;
-
-  if (!server_ip || !port || !db_name ) {
+  
+  if (!server_ip || !port || !db_name || !db_userid) {
+    console.log('------------------- 필수 파라미터(server_ip|port|db_name|db_userid) 값 누락 ----------------------');
+    console.log(req.body);
     return res.status(400).json({ error: '필수값 누락' });
   }
 
@@ -80,6 +84,8 @@ router.post('/telnet', async (req, res) => {
   } = req.body;
 
   if (!server_ip || !port ) {
+    console.log('------------------- 필수 파라미터(server_ip|port) 값 누락 ----------------------');
+    console.log(req.body);
     return res.status(400).json({ error: '필수값 누락' });
   }
 
