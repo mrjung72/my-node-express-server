@@ -58,7 +58,9 @@ router.put('/', authenticateJWT, async (req, res) => {
 router.post('/', async (req, res) => {
 
   const { userid, email, name, password } = req.body
-  const userPcIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress
+  const userPcIp = req.ip || req.remoteAddress || req.socket.remoteAddress || 
+                  (req.socket ? req.socket.remoteAddress : null) ||
+                  (req.headers['x-forwarded-for'] ? req.headers['x-forwarded-for'].split(',')[0] : null)
 
   const userInfoValidation = validateUserInfo({userid:userid, email:email, name:name, password:password})
   if (!userInfoValidation.valid) {
