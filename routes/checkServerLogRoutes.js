@@ -106,6 +106,9 @@ router.post('/telnet', async (req, res) => {
 
 // Telnet 접속 체크 이력 조회 API
 router.get('/telnet', authenticateJWT, async (req, res) => {
+
+  const userid = req.user?.userid;
+
   try {
     const clientIp = req.ip || req.remoteAddress || req.socket.remoteAddress || 
                     (req.socket ? req.socket.remoteAddress : null) ||
@@ -125,11 +128,11 @@ router.get('/telnet', authenticateJWT, async (req, res) => {
               and d.server_ip = p.server_ip 
               and d.port = p.port
               and d.server_ip = s.server_ip
-              and m.pc_ip = ?
+              and (m.pc_ip = ? or m.pc_ip in (select m.user_pc_ip from members m where m.userid = ?))
               and m.check_method = 'TELNET'
               order by m.yyyymmdd desc, m.hhmmss desc
           `
-    const [rows] = await conn.query(query, [realClientIp])
+    const [rows] = await conn.query(query, [realClientIp, userid])
     console.log('telnet rows:', rows)
 
     const sqlAggr = `
