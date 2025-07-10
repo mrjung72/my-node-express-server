@@ -238,7 +238,7 @@ CREATE TABLE check_server_log_dtl (
   error_msg varchar(1000) DEFAULT NULL,  
   collapsed_time int(4) DEFAULT 0, 
   createdAt timestamp DEFAULT current_timestamp(),
-  PRIMARY KEY (check_unit_id, server_ip, port, db_name, createdAt),
+  PRIMARY KEY (check_unit_id, server_ip, port, createdAt),
   INDEX ix_check_server_log_dtl_01 (db_name, check_unit_id),
   INDEX ix_check_server_log_dtl_02 (server_ip),
   INDEX ix_check_server_log_dtl_03 (error_code),
