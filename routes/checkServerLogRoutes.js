@@ -47,7 +47,12 @@ router.post('/db', async (req, res) => {
     result_code,
     error_code,
     error_msg,
-    collapsed_time
+    collapsed_time,
+    // 권한 정보 추가
+    perm_select,
+    perm_insert,
+    perm_update,
+    perm_delete
   } = req.body;
   
   if (!server_ip || !port || !db_name || !db_userid) {
@@ -58,9 +63,14 @@ router.post('/db', async (req, res) => {
 
   try {
     const conn = await mypool.getConnection();
+    
     const [result] = await conn.execute(
-      'INSERT INTO check_server_log_dtl (check_unit_id, server_ip, port, db_name, db_userid, result_code, error_code, error_msg, collapsed_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [check_unit_id, server_ip, port, db_name, db_userid, result_code, error_code, error_msg, collapsed_time]
+      `INSERT INTO check_server_log_dtl 
+       (check_unit_id, server_ip, port, db_name, db_userid, result_code, error_code, error_msg, collapsed_time, 
+        perm_select, perm_insert, perm_update, perm_delete) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [check_unit_id, server_ip, port, db_name, db_userid, result_code, error_code, error_msg, collapsed_time,
+       perm_select || false, perm_insert || false, perm_update || false, perm_delete || false]
     );
     conn.release();
     res.json({ success: true });

@@ -19,6 +19,10 @@ CREATE TABLE check_server_log_dtl (
   port nvarchar(4) NOT NULL,
   db_name varchar(100) DEFAULT NULL,   
   db_userid varchar(50) DEFAULT NULL,   -- DB 사용자 ID
+  perm_select BOOLEAN DEFAULT FALSE,
+  perm_insert BOOLEAN DEFAULT FALSE,
+  perm_update BOOLEAN DEFAULT FALSE,
+  perm_delete BOOLEAN DEFAULT FALSE,
   result_code varchar(10) NOT NULL,    -- [1,0]
   error_code varchar(20) DEFAULT NULL,         
   error_msg varchar(1000) DEFAULT NULL,  
