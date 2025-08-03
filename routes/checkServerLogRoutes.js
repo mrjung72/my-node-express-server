@@ -155,9 +155,6 @@ router.get('/telnet', authenticateJWT, async (req, res) => {
               group by m.yyyymmdd 
             `
     const [unitWorkList] = await conn.query(sqlAggr, [realClientIp, userid, yyyymmdd])
-
-    console.log('unitWorkList:', unitWorkList)
-
     conn.release()
     
     res.json({
@@ -208,15 +205,11 @@ router.get('/db', async (req, res) => {
     const sqlAggr = `
               select m.yyyymmdd, GROUP_CONCAT(CONCAT(m.hhmmss) ORDER BY m.hhmmss SEPARATOR ', ') AS hhmmss_list
               from check_server_log_master m
-              and (m.pc_ip = ? or m.pc_ip in (select m.user_pc_ip from members m where m.userid = ?))
+              where (m.pc_ip = ? or m.pc_ip in (select m.user_pc_ip from members m where m.userid = ?))
               and m.check_method = 'DB_CONN'
-              and m.yyyymmdd = ?
               group by m.yyyymmdd 
             `
-    const [unitWorkList] = await conn.query(sqlAggr, [realClientIp, userid, yyyymmdd])
-
-    console.log('unitWorkList:', unitWorkList)
-
+    const [unitWorkList] = await conn.query(sqlAggr, [realClientIp, userid])
     conn.release()
     
     res.json({
@@ -238,7 +231,10 @@ router.get('/db', async (req, res) => {
 
 // Telnet 체크일자(yyyymmdd) 목록 반환
 router.get('/dates', authenticateJWT, async (req, res) => {
+
+  const userid = req.user?.userid;
   const { check_method } = req.query;
+
   try {
     const clientIp = req.ip || req.remoteAddress || req.socket.remoteAddress || 
       (req.socket ? req.socket.remoteAddress : null) ||
@@ -250,10 +246,10 @@ router.get('/dates', authenticateJWT, async (req, res) => {
       `SELECT DISTINCT yyyymmdd 
         FROM check_server_log_master m, check_server_log_dtl d
         WHERE m.check_unit_id = d.check_unit_id
-        AND m.pc_ip = ? 
+        AND (m.pc_ip = ? or m.pc_ip in (select m.user_pc_ip from members m where m.userid = ?))
         AND m.check_method = ? 
         ORDER BY yyyymmdd DESC`,
-      [realClientIp, check_method]
+      [realClientIp, userid, check_method]
     );
     conn.release();
     res.json(rows.map(r => r.yyyymmdd));
@@ -264,6 +260,8 @@ router.get('/dates', authenticateJWT, async (req, res) => {
 
 // Telnet 체크시분초(hhmmss) 목록 반환 (특정 일자)
 router.get('/times', authenticateJWT, async (req, res) => {
+
+  const userid = req.user?.userid;
   const { yyyymmdd, check_method } = req.query;
   if (!yyyymmdd) return res.status(400).json({ message: 'yyyymmdd is required' });
   try {
@@ -276,11 +274,11 @@ router.get('/times', authenticateJWT, async (req, res) => {
       `SELECT DISTINCT hhmmss 
         FROM check_server_log_master m, check_server_log_dtl d
         WHERE m.check_unit_id = d.check_unit_id
-        AND m.pc_ip = ? 
+        AND (m.pc_ip = ? or m.pc_ip in (select m.user_pc_ip from members m where m.userid = ?))
         AND m.check_method = ? 
         AND m.yyyymmdd = ? 
         ORDER BY hhmmss`,
-      [realClientIp, check_method, yyyymmdd]
+      [realClientIp, userid, check_method, yyyymmdd]
     );
     conn.release();
     res.json(rows.map(r => r.hhmmss));
