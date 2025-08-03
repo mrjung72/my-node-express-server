@@ -118,6 +118,7 @@ router.post('/telnet', async (req, res) => {
 router.get('/telnet', authenticateJWT, async (req, res) => {
 
   const userid = req.user?.userid;
+  const { yyyymmdd, hhmmss } = req.query;
 
   try {
     const clientIp = req.ip || req.remoteAddress || req.socket.remoteAddress || 
@@ -140,19 +141,20 @@ router.get('/telnet', authenticateJWT, async (req, res) => {
               and d.server_ip = s.server_ip
               and (m.pc_ip = ? or m.pc_ip in (select m.user_pc_ip from members m where m.userid = ?))
               and m.check_method = 'TELNET'
+              and m.yyyymmdd = ?
               order by m.yyyymmdd desc, m.hhmmss desc
           `
-    const [rows] = await conn.query(query, [realClientIp, userid])
-    console.log('telnet rows:', rows)
+    const [rows] = await conn.query(query, [realClientIp, userid, yyyymmdd])
 
     const sqlAggr = `
               select m.yyyymmdd, GROUP_CONCAT(CONCAT(m.hhmmss) ORDER BY m.hhmmss SEPARATOR ', ') AS hhmmss_list
               from check_server_log_master m
-              where m.pc_ip = ?
+              and (m.pc_ip = ? or m.pc_ip in (select m.user_pc_ip from members m where m.userid = ?))
               and m.check_method = 'TELNET'
+              and m.yyyymmdd = ?
               group by m.yyyymmdd 
             `
-    const [unitWorkList] = await conn.query(sqlAggr, [realClientIp])
+    const [unitWorkList] = await conn.query(sqlAggr, [realClientIp, userid, yyyymmdd])
 
     console.log('unitWorkList:', unitWorkList)
 
@@ -177,6 +179,10 @@ router.get('/telnet', authenticateJWT, async (req, res) => {
 
 // DB접속 체크 이력 조회 API
 router.get('/db', async (req, res) => {
+
+  const userid = req.user?.userid;
+  const { yyyymmdd, hhmmss } = req.query;
+
   try {
     const clientIp = req.ip || req.remoteAddress || req.socket.remoteAddress || 
                     (req.socket ? req.socket.remoteAddress : null) ||
@@ -192,17 +198,33 @@ router.get('/db', async (req, res) => {
               from check_server_log_master m, check_server_log_dtl d, database_instances s
               where m.check_unit_id = d.check_unit_id 
               and d.db_name = s.db_instance_name 
-              and m.pc_ip = ?
+              and (m.pc_ip = ? or m.pc_ip in (select m.user_pc_ip from members m where m.userid = ?))
               and m.check_method = 'DB_CONN'
+              and m.yyyymmdd = ?
               order by m.yyyymmdd desc, m.hhmmss desc
           `
-    const [rows] = await conn.query(query, [realClientIp])
+    const [rows] = await conn.query(query, [realClientIp, userid, yyyymmdd])
+
+    const sqlAggr = `
+              select m.yyyymmdd, GROUP_CONCAT(CONCAT(m.hhmmss) ORDER BY m.hhmmss SEPARATOR ', ') AS hhmmss_list
+              from check_server_log_master m
+              and (m.pc_ip = ? or m.pc_ip in (select m.user_pc_ip from members m where m.userid = ?))
+              and m.check_method = 'DB_CONN'
+              and m.yyyymmdd = ?
+              group by m.yyyymmdd 
+            `
+    const [unitWorkList] = await conn.query(sqlAggr, [realClientIp, userid, yyyymmdd])
+
+    console.log('unitWorkList:', unitWorkList)
+
     conn.release()
     
     res.json({
       success: true,
-      data: rows,
-      total: rows.length
+      pc_ip: realClientIp,
+      rows: rows,
+      total: rows.length,
+      unitWorkList: unitWorkList
     })
     
   } catch (error) {
