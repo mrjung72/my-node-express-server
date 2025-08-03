@@ -149,7 +149,7 @@ router.get('/telnet', authenticateJWT, async (req, res) => {
     const sqlAggr = `
               select m.yyyymmdd, GROUP_CONCAT(CONCAT(m.hhmmss) ORDER BY m.hhmmss SEPARATOR ', ') AS hhmmss_list
               from check_server_log_master m
-              and (m.pc_ip = ? or m.pc_ip in (select m.user_pc_ip from members m where m.userid = ?))
+              where (m.pc_ip = ? or m.pc_ip in (select m.user_pc_ip from members m where m.userid = ?))
               and m.check_method = 'TELNET'
               and m.yyyymmdd = ?
               group by m.yyyymmdd 
