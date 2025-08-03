@@ -10,7 +10,7 @@ const axios = require('axios')
 router.get('/', authenticateJWT, async (req, res) => {
   try {
     const conn = await mypool.getConnection()
-    const rows = await conn.query('SELECT userid, name, email, isAdmin, status_cd, createdAt FROM members')
+    const rows = await conn.query('SELECT userid, name, email, isAdmin, status_cd, createdAt, user_pc_ip FROM members')
     conn.release()
     res.json(rows[0])
   } catch (err) {

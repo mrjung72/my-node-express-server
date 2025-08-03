@@ -12,17 +12,33 @@ const { validatePassword } = require('../utils/validator')
 router.get('/', authenticateJWT, async (req, res) => {
 
   const userid = req.user?.userid
+  
+  // 현재 접속 PC IP 추출
+  const clientIp = req.ip || req.remoteAddress || req.socket.remoteAddress || 
+                  (req.socket ? req.socket.remoteAddress : null) ||
+                  (req.headers['x-forwarded-for'] ? req.headers['x-forwarded-for'].split(',')[0] : null)
+  const realClientIp = clientIp ? clientIp.replace(/^::ffff:/, '') : ''
+
   if(admins[userid]) {
-    return res.json(admins[userid])
+    // 관리자의 경우 PC IP 정보 추가하여 반환
+    return res.json({
+      ...admins[userid],
+      current_pc_ip: realClientIp
+    })
   }       
 
   try {
-
-    const regUserIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress
     const conn = await mypool.getConnection()
     const rows = await conn.query('SELECT * FROM members WHERE userid = ?', [userid])
     conn.release()
-    res.json(rows[0][0])
+    
+    const userInfo = rows[0][0]
+    if (userInfo) {
+      // 사용자 정보에 현재 PC IP 추가
+      userInfo.current_pc_ip = realClientIp
+    }
+    
+    res.json(userInfo)
   } catch (err) {
     console.error(err)
     res.status(500).send('Database query failed')
