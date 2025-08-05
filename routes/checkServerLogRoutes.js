@@ -192,10 +192,12 @@ router.get('/db', async (req, res) => {
     const query = `
               select m.yyyymmdd, m.hhmmss, d.server_ip, d.port, d.result_code, d.error_code, d.error_msg,
                     d.db_name, d.db_userid, s.corp_id, s.db_instance_type, s.proc_id, s.proc_detail,
+                    sv.env_type, sv.role_type, s.db_instance_type db_type,
                     d.perm_select, d.perm_insert, d.perm_update, d.perm_delete
-              from check_server_log_master m, check_server_log_dtl d, database_instances s
+              from check_server_log_master m, check_server_log_dtl d, database_instances s, servers sv
               where m.check_unit_id = d.check_unit_id 
               and d.db_name = s.db_instance_name 
+              and d.server_ip = sv.server_ip
               and (m.pc_ip = ? or m.pc_ip in (select m.user_pc_ip from members m where m.userid = ?))
               and m.check_method = 'DB_CONN'
               and m.yyyymmdd = ?
