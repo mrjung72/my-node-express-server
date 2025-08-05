@@ -191,7 +191,8 @@ router.get('/db', async (req, res) => {
     const conn = await mypool.getConnection()
     const query = `
               select m.yyyymmdd, m.hhmmss, d.server_ip, d.port, d.result_code, d.error_code, d.error_msg,
-                    d.db_name, d.db_userid, s.corp_id, s.db_instance_type, s.proc_id, s.proc_detail
+                    d.db_name, d.db_userid, s.corp_id, s.db_instance_type, s.proc_id, s.proc_detail,
+                    d.perm_select, d.perm_insert, d.perm_update, d.perm_delete
               from check_server_log_master m, check_server_log_dtl d, database_instances s
               where m.check_unit_id = d.check_unit_id 
               and d.db_name = s.db_instance_name 
