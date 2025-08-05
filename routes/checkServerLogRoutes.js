@@ -17,8 +17,11 @@ router.post('/master', async (req, res) => {
     return res.status(400).json({ error: '필수값 누락' });
   }
 
-  const yyyymmdd = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-  const hhmmss = new Date().toISOString().slice(11, 16).replace(/:/g, '');
+  let offset = new Date().getTimezoneOffset() * 60000; //ms단위라 60000곱해줌
+  let dateOffset = new Date(new Date().getTime() - offset);
+  
+  const yyyymmdd = dateOffset.toISOString().slice(0, 10).replace(/-/g, '');
+  const hhmmss = dateOffset.toISOString().slice(11, 16).replace(/:/g, '');
 
   try {
     const conn = await mypool.getConnection();
@@ -175,7 +178,7 @@ router.get('/telnet', authenticateJWT, async (req, res) => {
 })
 
 // DB접속 체크 이력 조회 API
-router.get('/db', async (req, res) => {
+router.get('/db', authenticateJWT, async (req, res) => {
 
   const userid = req.user?.userid;
   const { yyyymmdd, hhmmss } = req.query;
