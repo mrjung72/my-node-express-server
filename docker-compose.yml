@@ -1,0 +1,14 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: my-node-express-server
+    ports:
+      - "4000:8080"
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      PORT: 8080
+    restart: unless-stopped

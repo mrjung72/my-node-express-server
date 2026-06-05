@@ -2,6 +2,7 @@ const express = require('express')
 const sql = require('mssql')
 const cors = require('cors')
 require('dotenv').config()
+require('./server')
 
 const app = express()
 app.use(cors())
