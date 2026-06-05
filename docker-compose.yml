@@ -11,4 +11,30 @@ services:
     environment:
       NODE_ENV: production
       PORT: 8080
+      DB_HOST: db
+      DB_PORT: 3306
+    depends_on:
+      - db
     restart: unless-stopped
+
+  db:
+    image: mariadb:11.4
+    container_name: my-node-express-mariadb
+    ports:
+      - "3306:3306"
+    environment:
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
+      MARIADB_DATABASE: ${DB_NAME}
+      MARIADB_USER: ${DB_USER}
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+      TZ: Asia/Seoul
+    volumes:
+      - mariadb_data:/var/lib/mysql
+      - ./resources/partition_check_server_log_dtl_mariadb.sql:/docker-entrypoint-initdb.d/01_partition_check_server_log_dtl_mariadb.sql:ro
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    restart: unless-stopped
+
+volumes:
+  mariadb_data:
