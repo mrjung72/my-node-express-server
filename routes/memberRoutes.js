@@ -5,6 +5,7 @@ const bcrypt = require('bcrypt')
 const { authenticateJWT, requireAdmin } = require('../middlewares/auth')
 const { validatePassword } = require('../utils/validator')
 const axios = require('axios')
+const admins = require("../utils/AdminDefine");
 
 // 회원 목록 조회
 router.get('/', authenticateJWT, async (req, res) => {
@@ -23,6 +24,11 @@ router.get('/', authenticateJWT, async (req, res) => {
 router.get('/check-id', async (req, res) => {
 
   const { userid } = req.query
+
+  if (userid.toLowerCase().startsWith('admin')) {
+    return res.status(409).json({ message: 'admin으로 시작하는 아이디는 사용할 수 없습니다.' });
+  }
+
   const conn = await mypool.getConnection()
   const row = await conn.query('SELECT * FROM members WHERE userid = ?', [userid])
   conn.release()
