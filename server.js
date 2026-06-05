@@ -8,7 +8,7 @@ const app = express()
 const port = process.env.PORT || 4000
 
 const corsOptions = {
-  origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : true,
+  origin: 'https://resourcemgtappfront-667598904364.asia-northeast3.run.app',
   credentials: true
 }
 app.use(cors(corsOptions))
