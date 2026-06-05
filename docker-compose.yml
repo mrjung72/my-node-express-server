@@ -14,7 +14,8 @@ services:
       DB_HOST: db
       DB_PORT: 3306
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     restart: unless-stopped
 
   db:
@@ -30,10 +31,16 @@ services:
       TZ: Asia/Seoul
     volumes:
       - mariadb_data:/var/lib/mysql
-      - ./resources/partition_check_server_log_dtl_mariadb.sql:/docker-entrypoint-initdb.d/01_partition_check_server_log_dtl_mariadb.sql:ro
+      - ./resources/create_tables_mariadb.sql:/docker-entrypoint-initdb.d/00_create_tables_mariadb.sql:ro
     command:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
     restart: unless-stopped
 
 volumes:

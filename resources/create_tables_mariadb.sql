@@ -193,7 +193,7 @@ CREATE TABLE board_files (
   PRIMARY KEY (file_id),
   INDEX ix_board_files_01 (board_id),
   INDEX ix_board_files_02 (filename),
-  -- FOREIGN KEY (board_id) REFERENCES boards(board_id) ON DELETE CASCADE
+  FOREIGN KEY (board_id) REFERENCES boards(board_id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
