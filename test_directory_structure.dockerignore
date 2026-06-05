@@ -1,0 +1,23 @@
+// ... existing code ...
+
+app.get('/api/users', async (req, res) => {
+  try {
+    const pool = await sql.connect(config)
+    const result = await pool.request().query('SELECT * FROM Users')
+    res.json(result.recordset)
+  } catch (err) {
+    console.error('DB Error:', err)
+    res.status(500).send('Server Error')
+  }
+})
+
+const PORT = process.env.PORT || 4000
+app.listen(PORT, () => console.log(`Backend running on port ${PORT}`))node_modules
+npm-debug.log
+Dockerfile
+.dockerignore
+.git
+.gitignore
+.env
+README.md
+test
